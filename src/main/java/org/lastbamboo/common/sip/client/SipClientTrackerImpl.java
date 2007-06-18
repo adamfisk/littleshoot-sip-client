@@ -23,14 +23,14 @@ public class SipClientTrackerImpl implements SipClientTracker
     /**
      * The list of clients being tracked.
      */
-    private final List m_clients;
+    private final List<SipClient> m_clients;
     
     /**
      * The mapping of clients to the registration listeners that need to be
      * notified when the clients are closed, since closing corresponds to the
      * registration being lost.
      */
-    private final Map m_clientListenerMap;
+    private final Map<SipClient, ProxyRegistrationListener> m_clientListenerMap;
     
     /**
      * The counter used to cycle through available clients.
@@ -44,8 +44,9 @@ public class SipClientTrackerImpl implements SipClientTracker
     public SipClientTrackerImpl
             ()
         {
-        m_clients = new ArrayList();
-        m_clientListenerMap = new HashMap();
+        m_clients = new ArrayList<SipClient>();
+        m_clientListenerMap = 
+            new HashMap<SipClient, ProxyRegistrationListener>();
         m_counter = 0;
         }
     
@@ -71,7 +72,7 @@ public class SipClientTrackerImpl implements SipClientTracker
                 return null;
                 }
             
-            return (SipClient) this.m_clients.get(this.m_counter);
+            return this.m_clients.get(this.m_counter);
             }
         }
 
@@ -103,7 +104,7 @@ public class SipClientTrackerImpl implements SipClientTracker
             // null. This indicates that we've lost the connection to the 
             // registrar.
             final ProxyRegistrationListener listener =
-                (ProxyRegistrationListener) m_clientListenerMap.get(client);
+                m_clientListenerMap.get(client);
             this.m_clientListenerMap.remove(client);
             
             // Notify the listener.
