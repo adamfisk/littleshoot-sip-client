@@ -1,5 +1,7 @@
 package org.lastbamboo.common.sip.client;
 
+import java.io.IOException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.mina.common.ByteBuffer;
@@ -57,9 +59,18 @@ public class SipClientMessageVisitor implements SipMessageVisitor
             LOG.debug("Received invite: "+invite);
             }
         // Process the invite statelessly.
-        final ByteBuffer answer = 
-            this.m_offerProcessor.answer(invite.getBody());
-        this.m_sipClient.writeInviteOk(invite, answer);
+        try
+            {
+            final ByteBuffer answer = 
+                this.m_offerProcessor.answer(invite.getBody());
+            this.m_sipClient.writeInviteOk(invite, answer);
+            }
+        catch (final IOException e)
+            {
+            // TODO: Write some sort of failure response to the INVITE!!
+            
+            }
+        
         }
 
     public void visitRegister(final Register register)
