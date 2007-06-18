@@ -30,6 +30,7 @@ public class SipClientMessageVisitor implements SipMessageVisitor
     /**
      * Visitor for message received on SIP clients.
      * 
+     * @param sipClient The SIP client for writing any necessary messages.
      * @param tracker The tracker for looking up the corresponding transactions
      * for received messages.
      * @param inviteProcessor Class that processes incoming INVITEs.
