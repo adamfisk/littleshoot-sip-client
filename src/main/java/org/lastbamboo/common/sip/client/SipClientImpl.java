@@ -27,7 +27,7 @@ import org.apache.mina.transport.socket.nio.SocketConnector;
 import org.apache.mina.transport.socket.nio.SocketConnectorConfig;
 import org.lastbamboo.common.offer.OfferProcessor;
 import org.lastbamboo.common.offer.OfferProcessorFactory;
-import org.lastbamboo.common.sip.stack.codec.SipCodecFactory;
+import org.lastbamboo.common.sip.stack.codec.SipProtocolCodecFactory;
 import org.lastbamboo.common.sip.stack.codec.SipIoHandler;
 import org.lastbamboo.common.sip.stack.message.Invite;
 import org.lastbamboo.common.sip.stack.message.Register;
@@ -182,7 +182,7 @@ public class SipClientImpl extends IoFilterAdapter implements SipClient,
         final IoConnectorConfig config = new SocketConnectorConfig();
         
         connector.getFilterChain().addLast("codec",
-            new ProtocolCodecFilter(new SipCodecFactory(headerFactory)));
+            new ProtocolCodecFilter(new SipProtocolCodecFactory(headerFactory)));
         
         final IoHandler handler = new SipIoHandler(visitorFactory);
         
