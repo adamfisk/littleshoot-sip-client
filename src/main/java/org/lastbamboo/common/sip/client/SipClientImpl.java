@@ -3,6 +3,7 @@ package org.lastbamboo.common.sip.client;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.ExecutorService;
@@ -15,10 +16,12 @@ import org.apache.mina.common.ByteBuffer;
 import org.apache.mina.common.ConnectFuture;
 import org.apache.mina.common.IoConnector;
 import org.apache.mina.common.IoConnectorConfig;
-import org.apache.mina.common.IoFilterAdapter;
 import org.apache.mina.common.IoFuture;
 import org.apache.mina.common.IoFutureListener;
 import org.apache.mina.common.IoHandler;
+import org.apache.mina.common.IoService;
+import org.apache.mina.common.IoServiceConfig;
+import org.apache.mina.common.IoServiceListener;
 import org.apache.mina.common.IoSession;
 import org.apache.mina.common.SimpleByteBufferAllocator;
 import org.apache.mina.common.WriteFuture;
@@ -27,8 +30,8 @@ import org.apache.mina.transport.socket.nio.SocketConnector;
 import org.apache.mina.transport.socket.nio.SocketConnectorConfig;
 import org.lastbamboo.common.offer.OfferProcessor;
 import org.lastbamboo.common.offer.OfferProcessorFactory;
-import org.lastbamboo.common.sip.stack.codec.SipProtocolCodecFactory;
 import org.lastbamboo.common.sip.stack.codec.SipIoHandler;
+import org.lastbamboo.common.sip.stack.codec.SipProtocolCodecFactory;
 import org.lastbamboo.common.sip.stack.message.Invite;
 import org.lastbamboo.common.sip.stack.message.Register;
 import org.lastbamboo.common.sip.stack.message.SipMessage;
@@ -47,8 +50,8 @@ import org.lastbamboo.common.util.NetworkUtils;
  * SIP messages.  It queues up messages on a separate thread from in-order
  * writing.
  */
-public class SipClientImpl extends IoFilterAdapter implements SipClient,
-    SipTransactionListener, IoFutureListener
+public class SipClientImpl implements SipClient,
+    SipTransactionListener, IoFutureListener, IoServiceListener
     {
 
     private final Log LOG = LogFactory.getLog(SipClientImpl.class);
@@ -179,6 +182,8 @@ public class SipClientImpl extends IoFilterAdapter implements SipClient,
         final SipHeaderFactory headerFactory = new SipHeaderFactoryImpl();
 
         final IoConnector connector = new SocketConnector();
+        connector.addListener(this);
+        
         final IoConnectorConfig config = new SocketConnectorConfig();
         
         connector.getFilterChain().addLast("codec",
@@ -319,17 +324,6 @@ public class SipClientImpl extends IoFilterAdapter implements SipClient,
                 }
             }
         }
-    
-    public void sessionClosed(final NextFilter nextFilter, 
-        final IoSession session) 
-        {
-        LOG.warn("Lost connection to the registrar...notifying listener...");
-        this.m_closed = true;
-        this.m_crlfKeepAliveSender.stop();
-        this.m_messageExecutor.shutdownNow();
-        this.m_closeListener.onClose(this);
-        nextFilter.sessionClosed(session);
-        }
 
     public void onTransactionSucceeded(final SipMessage message)
         {
@@ -391,5 +385,33 @@ public class SipClientImpl extends IoFilterAdapter implements SipClient,
             };
     
         this.m_messageExecutor.execute(runner);
+        }
+
+    public void serviceActivated(final IoService service, 
+        final SocketAddress serviceAddress, final IoHandler handler, 
+        final IoServiceConfig config)
+        {
+        LOG.debug("Service activated.");
+        }
+
+    public void serviceDeactivated(final IoService service, 
+        final SocketAddress serviceAddress, final IoHandler handler, 
+        final IoServiceConfig config)
+        {
+        LOG.debug("Service deactivated.");
+        }
+
+    public void sessionCreated(final IoSession session)
+        {
+        LOG.debug("Session created.");
+        }
+
+    public void sessionDestroyed(IoSession session)
+        {
+        LOG.warn("Lost connection to the registrar...notifying listener...");
+        this.m_closed = true;
+        this.m_crlfKeepAliveSender.stop();
+        this.m_messageExecutor.shutdownNow();
+        this.m_closeListener.onClose(this);
         }
     }
