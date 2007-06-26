@@ -71,4 +71,17 @@ public interface SipClient
      */
     void writeInviteOk(Invite invite, ByteBuffer body);
 
+    /**
+     * Registers the SIP client.
+     * @throws IOException If we do not get a successful registration response.
+     */
+    void register() throws IOException;
+
+    /**
+     * Connects to the proxy server.
+     * 
+     * @throws IOException If we cannot connect.
+     */
+    void connect() throws IOException;
+
     }

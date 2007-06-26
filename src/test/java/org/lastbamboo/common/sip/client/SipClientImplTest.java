@@ -136,7 +136,9 @@ public class SipClientImplTest extends TestCase
                 messageFactory, transactionTracker, 
                 offerProcessorFactory, uriUtils, transportLayer, 
                 sipClientTracker, calculator);
-              
+       
+        client.connect();
+        client.register();
         return client;
         }
 

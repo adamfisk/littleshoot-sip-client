@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -116,9 +117,8 @@ public class SipClientImpl implements SipClient,
      * @param transportLayer The class for actually sending SIP messages.
      * @param closeListener The class that listens for closed connections to
      * proxies.
-     * @param calculator 
-     * @throws IOException If we cannot successfully connect to the server and
-     * register with it.
+     * @param calculator The class that calculates the delay between double 
+     * CRLF keep-alive messages, passed in for testing.
      */
     public SipClientImpl(final URI sipClientUri, final URI proxyUri,
         final SipMessageFactory messageFactory, 
@@ -128,13 +128,20 @@ public class SipClientImpl implements SipClient,
         final SipTcpTransportLayer transportLayer,
         final SipClientCloseListener closeListener, 
         final CrlfDelayCalculator calculator) 
-        throws IOException
         {
         // Configure the MINA buffers for optimal performance.
         ByteBuffer.setUseDirectBuffers(false);
         ByteBuffer.setAllocator(new SimpleByteBufferAllocator());
         
-        this.m_address = NetworkUtils.getLocalHost();
+        try
+            {
+            this.m_address = NetworkUtils.getLocalHost();
+            }
+        catch (final UnknownHostException e)
+            {
+            LOG.error("Could not resolve localhost", e);
+            throw new IllegalArgumentException("Could not resolve localhost");
+            }
         this.m_sipClientUri = sipClientUri;
         this.m_proxyUri = proxyUri;  
         this.m_messageFactory = messageFactory;
@@ -151,21 +158,27 @@ public class SipClientImpl implements SipClient,
         catch (final URISyntaxException e)
             {
             LOG.error("Could not create URI", e);
-            throw new IOException("Could not create URI!!");
+            throw new IllegalArgumentException("Bad URI: "+sipClientUri);
             }
+
+        this.m_crlfKeepAliveSender = new CrlfKeepAliveSender(this, calculator);
+        }
+    
+    public void connect() throws IOException
+        {
         
-        final String host = this.m_uriUtils.getHostInSipUri(proxyUri);  
-        final int port = this.m_uriUtils.getPortInSipUri(proxyUri);
+        final String host = this.m_uriUtils.getHostInSipUri(this.m_proxyUri);  
+        final int port = this.m_uriUtils.getPortInSipUri(this.m_proxyUri);
         final InetSocketAddress remoteAddress = 
             new InetSocketAddress(host, port);
         
         LOG.debug("Connecting to registrar at: "+remoteAddress);
         this.m_ioSession = connect(remoteAddress);
-        
-        register(sipClientUri, this.m_domainUri, this.m_ioSession);
-        
-        this.m_crlfKeepAliveSender = new CrlfKeepAliveSender(this, calculator);
-        
+        }
+    
+    public void register() throws IOException 
+        {
+        register(this.m_sipClientUri, this.m_domainUri, this.m_ioSession);
         this.m_crlfKeepAliveSender.scheduleCrlf();
         }
     
@@ -320,6 +333,7 @@ public class SipClientImpl implements SipClient,
             
             if (!this.m_registrationSucceeded)
                 {
+                LOG.warn("Could not register!!");
                 throw new IOException("Registration failed!!");
                 }
             }
@@ -398,7 +412,7 @@ public class SipClientImpl implements SipClient,
         final SocketAddress serviceAddress, final IoHandler handler, 
         final IoServiceConfig config)
         {
-        LOG.debug("Service deactivated.");
+        LOG.warn("Service deactivated.");
         }
 
     public void sessionCreated(final IoSession session)
