@@ -68,7 +68,7 @@ public class SipClientMessageVisitor implements SipMessageVisitor
         catch (final IOException e)
             {
             // TODO: Write some sort of failure response to the INVITE!!
-            
+            LOG.warn("Error processing offer", e);
             }
         
         }
