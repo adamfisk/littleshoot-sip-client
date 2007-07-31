@@ -1,7 +1,8 @@
 package org.lastbamboo.common.sip.client;
 
 import org.apache.mina.common.IoSession;
-import org.lastbamboo.common.offer.OfferProcessor;
+import org.lastbamboo.common.offer.answer.OfferAnswer;
+import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.sip.stack.message.SipMessageVisitor;
 import org.lastbamboo.common.sip.stack.message.SipMessageVisitorFactory;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionTracker;
@@ -13,30 +14,35 @@ public class SipClientMessageVisitorFactory implements SipMessageVisitorFactory
     {
 
     private final SipTransactionTracker m_transactionTracker;
-    private final OfferProcessor m_offerProcessor;
     private final SipClient m_sipClient;
+    private final OfferAnswerFactory m_offerAnswerFactory;
 
     /**
      * Creates a new message visitor factory.
      * 
      * @param sipClient The SIP client.
      * @param transactionTracker The tracker for SIP transactions.
-     * @param inviteProcessor The INVITE processing class.
+     * @param offerAnswerFactory The factory for creating offer/answer 
+     * instances.
      */
     public SipClientMessageVisitorFactory(
         final SipClient sipClient, 
         final SipTransactionTracker transactionTracker,
-        final OfferProcessor inviteProcessor)
+        final OfferAnswerFactory offerAnswerFactory)
         {
         m_sipClient = sipClient;
         m_transactionTracker = transactionTracker;
-        m_offerProcessor = inviteProcessor;
+        m_offerAnswerFactory = offerAnswerFactory;
         }
 
     public SipMessageVisitor createVisitor(final IoSession session)
         {
+        // Note we only need to answerer in the visitor, as the offerer has
+        // already been created.
+        final OfferAnswer offerAnswer = 
+            this.m_offerAnswerFactory.createAnswerer();
         return new SipClientMessageVisitor(this.m_sipClient,
-            this.m_transactionTracker, this.m_offerProcessor);
+            this.m_transactionTracker, offerAnswer);
         }
 
     }

@@ -16,9 +16,9 @@ import junit.framework.TestCase;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.mina.common.ByteBuffer;
-import org.lastbamboo.common.offer.OfferProcessor;
-import org.lastbamboo.common.offer.OfferProcessorFactory;
+import org.lastbamboo.common.offer.answer.OfferAnswer;
+import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
+import org.lastbamboo.common.sip.client.stubs.OfferAnswerStub;
 import org.lastbamboo.common.sip.stack.SipUriFactory;
 import org.lastbamboo.common.sip.stack.SipUriFactoryImpl;
 import org.lastbamboo.common.sip.stack.message.SipMessage;
@@ -107,6 +107,7 @@ public class SipClientImplTest extends TestCase
         final SipTcpTransportLayer transportLayer = 
             (SipTcpTransportLayer) context.getBean("sipTransportLayer");
         
+        /*
         final OfferProcessorFactory offerProcessorFactory =
             new OfferProcessorFactory()
             {
@@ -125,16 +126,30 @@ public class SipClientImplTest extends TestCase
                 }
             
             };
+        */
+         
+        final OfferAnswerFactory offerAnswerFactory = new OfferAnswerFactory()
+            {
+
+            public OfferAnswer createAnswerer()
+                {
+                return new OfferAnswerStub();
+                }
+
+            public OfferAnswer createOfferer()
+                {
+                return new OfferAnswerStub();
+                }
+            };
             
         final SipClientTracker sipClientTracker = 
             (SipClientTracker) context.getBean("sipClientTracker");
-        
         
         final CrlfDelayCalculator calculator = new DefaultCrlfDelayCalculator();
         final SipClient client = 
             new SipClientImpl(clientUri, proxyUri, 
                 messageFactory, transactionTracker, 
-                offerProcessorFactory, uriUtils, transportLayer, 
+                offerAnswerFactory, uriUtils, transportLayer, 
                 sipClientTracker, calculator);
        
         client.connect();

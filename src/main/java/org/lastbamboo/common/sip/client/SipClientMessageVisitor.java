@@ -1,11 +1,9 @@
 package org.lastbamboo.common.sip.client;
 
-import java.io.IOException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.mina.common.ByteBuffer;
-import org.lastbamboo.common.offer.OfferProcessor;
+import org.lastbamboo.common.offer.answer.OfferAnswer;
 import org.lastbamboo.common.sip.stack.message.DoubleCrlfKeepAlive;
 import org.lastbamboo.common.sip.stack.message.Invite;
 import org.lastbamboo.common.sip.stack.message.Register;
@@ -26,8 +24,9 @@ public class SipClientMessageVisitor implements SipMessageVisitor
     private static final Log LOG = LogFactory.getLog(
         SipClientMessageVisitor.class);
     private final SipTransactionTracker m_transactionTracker;
-    private final OfferProcessor m_offerProcessor;
+    //private final OfferProcessor m_offerProcessor;
     private final SipClient m_sipClient;
+    private final OfferAnswer m_offerAnswer;
     
     /**
      * Visitor for message received on SIP clients.
@@ -35,15 +34,15 @@ public class SipClientMessageVisitor implements SipMessageVisitor
      * @param sipClient The SIP client for writing any necessary messages.
      * @param tracker The tracker for looking up the corresponding transactions
      * for received messages.
-     * @param inviteProcessor Class that processes incoming INVITEs.
+     * @param offerAnswer Class that processes incoming INVITEs.
      */
     public SipClientMessageVisitor(final SipClient sipClient,
         final SipTransactionTracker tracker,
-        final OfferProcessor inviteProcessor)
+        final OfferAnswer offerAnswer)
         {
         this.m_sipClient = sipClient;
         this.m_transactionTracker = tracker;
-        this.m_offerProcessor = inviteProcessor;
+        this.m_offerAnswer = offerAnswer;
         }
 
     public void visitRequestTimedOut(final RequestTimeoutResponse response)
@@ -59,18 +58,10 @@ public class SipClientMessageVisitor implements SipMessageVisitor
             LOG.debug("Received invite: "+invite);
             }
         // Process the invite statelessly.
-        try
-            {
-            final ByteBuffer answer = 
-                this.m_offerProcessor.answer(invite.getBody());
-            this.m_sipClient.writeInviteOk(invite, answer);
-            }
-        catch (final IOException e)
-            {
-            // TODO: Write some sort of failure response to the INVITE!!
-            LOG.warn("Error processing offer", e);
-            }
-        
+        final byte[] answer = this.m_offerAnswer.generateAnswer();
+        //final ByteBuffer answer = 
+          //  this.m_offerProcessor.answer(invite.getBody());
+        this.m_sipClient.writeInviteOk(invite, ByteBuffer.wrap(answer));
         }
 
     public void visitRegister(final Register register)

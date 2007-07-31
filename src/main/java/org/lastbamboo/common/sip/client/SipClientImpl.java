@@ -29,8 +29,7 @@ import org.apache.mina.common.WriteFuture;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.transport.socket.nio.SocketConnector;
 import org.apache.mina.transport.socket.nio.SocketConnectorConfig;
-import org.lastbamboo.common.offer.OfferProcessor;
-import org.lastbamboo.common.offer.OfferProcessorFactory;
+import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.sip.stack.codec.SipIoHandler;
 import org.lastbamboo.common.sip.stack.codec.SipProtocolCodecFactory;
 import org.lastbamboo.common.sip.stack.message.Invite;
@@ -79,8 +78,6 @@ public class SipClientImpl implements SipClient,
 
     private final SipTransactionTracker m_transactionTracker;
 
-    private final OfferProcessorFactory m_offerProcessorFactory;
-
     private final SipTcpTransportLayer m_transportLayer;
 
     private final SipClientCloseListener m_closeListener;
@@ -102,6 +99,8 @@ public class SipClientImpl implements SipClient,
     private IoSession m_ioSession;
     
     private int m_responsesWritten = 0;
+
+    private final OfferAnswerFactory m_offerAnswerFactory;
     
     /**
      * Creates a new SIP client connection to an individual SIP proxy server.
@@ -111,8 +110,8 @@ public class SipClientImpl implements SipClient,
      * @param messageFactory The factory for creating new SIP messages.
      * @param transactionTracker The class for keeping track of SIP client
      * transactions.
-     * @param statelessUasFactory The class for creating new stateless 
-     * processors on the UAS side.
+     * @param offerAnswerFactory Factory for creating classes capable of 
+     * handling offers and answers.
      * @param uriUtils Utilities for handling SIP URIs.
      * @param transportLayer The class for actually sending SIP messages.
      * @param closeListener The class that listens for closed connections to
@@ -123,7 +122,7 @@ public class SipClientImpl implements SipClient,
     public SipClientImpl(final URI sipClientUri, final URI proxyUri,
         final SipMessageFactory messageFactory, 
         final SipTransactionTracker transactionTracker,
-        final OfferProcessorFactory statelessUasFactory,
+        final OfferAnswerFactory offerAnswerFactory,
         final UriUtils uriUtils, 
         final SipTcpTransportLayer transportLayer,
         final SipClientCloseListener closeListener, 
@@ -146,7 +145,7 @@ public class SipClientImpl implements SipClient,
         this.m_proxyUri = proxyUri;  
         this.m_messageFactory = messageFactory;
         this.m_transactionTracker = transactionTracker;
-        this.m_offerProcessorFactory = statelessUasFactory;
+        this.m_offerAnswerFactory = offerAnswerFactory;
         this.m_uriUtils = uriUtils;
         this.m_transportLayer = transportLayer;
         this.m_closeListener = closeListener;
@@ -185,12 +184,9 @@ public class SipClientImpl implements SipClient,
     private IoSession connect(final InetSocketAddress remoteAddress) 
         throws IOException
         {
-        final OfferProcessor processor = 
-            this.m_offerProcessorFactory.createOfferProcessor();
-        
         final SipMessageVisitorFactory visitorFactory = 
             new SipClientMessageVisitorFactory(this, this.m_transactionTracker, 
-                processor);
+                this.m_offerAnswerFactory);
         
         final SipHeaderFactory headerFactory = new SipHeaderFactoryImpl();
 
