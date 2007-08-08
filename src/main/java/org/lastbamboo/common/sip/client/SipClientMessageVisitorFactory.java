@@ -37,12 +37,8 @@ public class SipClientMessageVisitorFactory implements SipMessageVisitorFactory
 
     public SipMessageVisitor createVisitor(final IoSession session)
         {
-        // Note we only need to answerer in the visitor, as the offerer has
-        // already been created.
-        final OfferAnswer offerAnswer = 
-            this.m_offerAnswerFactory.createAnswerer();
         return new SipClientMessageVisitor(this.m_sipClient,
-            this.m_transactionTracker, offerAnswer);
+            this.m_transactionTracker, this.m_offerAnswerFactory);
         }
 
     }

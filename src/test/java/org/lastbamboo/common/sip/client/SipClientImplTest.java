@@ -16,6 +16,7 @@ import junit.framework.TestCase;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.mina.common.ByteBuffer;
 import org.lastbamboo.common.offer.answer.OfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.sip.client.stubs.OfferAnswerStub;
@@ -106,37 +107,15 @@ public class SipClientImplTest extends TestCase
         final UriUtils uriUtils = (UriUtils) context.getBean("uriUtils");
         final SipTcpTransportLayer transportLayer = 
             (SipTcpTransportLayer) context.getBean("sipTransportLayer");
-        
-        /*
-        final OfferProcessorFactory offerProcessorFactory =
-            new OfferProcessorFactory()
-            {
-
-            public OfferProcessor createOfferProcessor()
-                {
-                return new OfferProcessor()
-                    {
-
-                    public ByteBuffer answer(ByteBuffer offer)
-                        {
-                        return ByteBuffer.allocate(0);
-                        }
-                    
-                    };
-                }
-            
-            };
-        */
          
         final OfferAnswerFactory offerAnswerFactory = new OfferAnswerFactory()
             {
-
-            public OfferAnswer createAnswerer()
+            public OfferAnswer createOfferer()
                 {
                 return new OfferAnswerStub();
                 }
 
-            public OfferAnswer createOfferer()
+            public OfferAnswer createAnswerer(ByteBuffer offer)
                 {
                 return new OfferAnswerStub();
                 }

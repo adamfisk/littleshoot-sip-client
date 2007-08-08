@@ -374,6 +374,16 @@ public class SipClientImpl implements SipClient,
     
         writeResponse(response);
         }
+    
+    public void writeInviteRejected(final Invite invite, 
+        final int responseCode, final String reasonPhrase) 
+        {
+        final SipMessage response = 
+            this.m_messageFactory.createErrorResponse(invite, getInstanceId(), 
+                getContactUri(), responseCode, reasonPhrase);
+    
+        writeResponse(response);
+        }
 
     private void writeResponse(final SipMessage message)
         {

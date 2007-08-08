@@ -24,7 +24,7 @@ public interface SipClient
      */
     void invite(URI sipUri, byte[] body, SipTransactionListener listener) 
         throws IOException;
-
+    
     /**
      * Accessor for the unique instance ID for this client.
      * 
@@ -70,6 +70,16 @@ public interface SipClient
      * @param body The body of the INVITE OK.
      */
     void writeInviteOk(Invite invite, ByteBuffer body);
+    
+    /**
+     * Writes an INVITE rejected response.
+     * 
+     * @param invite The invite.
+     * @param responseCode The response code.
+     * @param reasonPhrase The reason phrase for the error.
+     */
+    void writeInviteRejected(Invite invite, int responseCode, 
+        String reasonPhrase); 
 
     /**
      * Registers the SIP client.

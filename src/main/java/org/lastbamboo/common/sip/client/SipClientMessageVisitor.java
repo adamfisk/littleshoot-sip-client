@@ -1,9 +1,12 @@
 package org.lastbamboo.common.sip.client;
 
+import java.io.IOException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.mina.common.ByteBuffer;
 import org.lastbamboo.common.offer.answer.OfferAnswer;
+import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.sip.stack.message.DoubleCrlfKeepAlive;
 import org.lastbamboo.common.sip.stack.message.Invite;
 import org.lastbamboo.common.sip.stack.message.Register;
@@ -14,6 +17,7 @@ import org.lastbamboo.common.sip.stack.message.SipResponse;
 import org.lastbamboo.common.sip.stack.message.UnknownSipRequest;
 import org.lastbamboo.common.sip.stack.transaction.client.SipClientTransaction;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionTracker;
+import org.lastbamboo.common.util.mina.MinaUtils;
 
 /**
  * Class that visits incoming SIP messages for SIP clients.
@@ -24,9 +28,8 @@ public class SipClientMessageVisitor implements SipMessageVisitor
     private static final Log LOG = LogFactory.getLog(
         SipClientMessageVisitor.class);
     private final SipTransactionTracker m_transactionTracker;
-    //private final OfferProcessor m_offerProcessor;
     private final SipClient m_sipClient;
-    private final OfferAnswer m_offerAnswer;
+    private final OfferAnswerFactory m_offerAnswerFactory;
     
     /**
      * Visitor for message received on SIP clients.
@@ -34,15 +37,15 @@ public class SipClientMessageVisitor implements SipMessageVisitor
      * @param sipClient The SIP client for writing any necessary messages.
      * @param tracker The tracker for looking up the corresponding transactions
      * for received messages.
-     * @param offerAnswer Class that processes incoming INVITEs.
+     * @param offerAnswerFactory Class that processes incoming INVITEs.
      */
     public SipClientMessageVisitor(final SipClient sipClient,
         final SipTransactionTracker tracker,
-        final OfferAnswer offerAnswer)
+        final OfferAnswerFactory offerAnswerFactory)
         {
         this.m_sipClient = sipClient;
         this.m_transactionTracker = tracker;
-        this.m_offerAnswer = offerAnswer;
+        this.m_offerAnswerFactory = offerAnswerFactory;
         }
 
     public void visitRequestTimedOut(final RequestTimeoutResponse response)
@@ -57,11 +60,28 @@ public class SipClientMessageVisitor implements SipMessageVisitor
             {
             LOG.debug("Received invite: "+invite);
             }
+        
+        final ByteBuffer offer = invite.getBody();
+        
         // Process the invite statelessly.
-        final byte[] answer = this.m_offerAnswer.generateAnswer();
-        //final ByteBuffer answer = 
-          //  this.m_offerProcessor.answer(invite.getBody());
-        this.m_sipClient.writeInviteOk(invite, ByteBuffer.wrap(answer));
+        try
+            {
+            final OfferAnswer offerAnswer = 
+                this.m_offerAnswerFactory.createAnswerer(offer);
+            final byte[] answer = offerAnswer.generateAnswer();
+            this.m_sipClient.writeInviteOk(invite, ByteBuffer.wrap(answer));
+            }
+        catch (final IOException e)
+            {
+            // This indicates the SDP contained data we could not understand,
+            // so we need to send an error response.
+            LOG.warn("We could not understand the offer: " +
+                MinaUtils.toAsciiString(offer));
+            // Generate a SIP error response.
+            // See http://tools.ietf.org/html/rfc3261#section-13.3.1.3
+            this.m_sipClient.writeInviteRejected(invite, 488, 
+                "Not Acceptable Here");
+            }
         }
 
     public void visitRegister(final Register register)
