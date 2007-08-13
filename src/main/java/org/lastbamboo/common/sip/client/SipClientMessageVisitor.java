@@ -70,6 +70,7 @@ public class SipClientMessageVisitor implements SipMessageVisitor
                 this.m_offerAnswerFactory.createAnswerer(offer);
             final byte[] answer = offerAnswer.generateAnswer();
             this.m_sipClient.writeInviteOk(invite, ByteBuffer.wrap(answer));
+            offerAnswer.processOffer(offer);
             }
         catch (final IOException e)
             {

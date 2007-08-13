@@ -38,4 +38,10 @@ public class OfferAnswerStub implements OfferAnswer
         return null;
         }
 
+    public void processOffer(ByteBuffer offer) throws IOException
+        {
+        // TODO Auto-generated method stub
+        
+        }
+
     }
