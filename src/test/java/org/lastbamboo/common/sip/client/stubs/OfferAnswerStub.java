@@ -1,10 +1,10 @@
 package org.lastbamboo.common.sip.client.stubs;
 
 import java.io.IOException;
-import java.net.Socket;
 
 import org.apache.mina.common.ByteBuffer;
 import org.lastbamboo.common.offer.answer.OfferAnswer;
+import org.lastbamboo.common.offer.answer.OfferAnswerListener;
 
 public class OfferAnswerStub implements OfferAnswer
     {
@@ -21,12 +21,6 @@ public class OfferAnswerStub implements OfferAnswer
         // TODO Auto-generated constructor stub
         }
 
-    public Socket createSocket(ByteBuffer answer) throws IOException
-        {
-        // TODO Auto-generated method stub
-        return null;
-        }
-
     public byte[] generateAnswer()
         {
         return this.m_answer;
@@ -39,6 +33,24 @@ public class OfferAnswerStub implements OfferAnswer
         }
 
     public void processOffer(ByteBuffer offer) throws IOException
+        {
+        // TODO Auto-generated method stub
+        
+        }
+
+    public void processAnswer(ByteBuffer answer) throws IOException
+        {
+        // TODO Auto-generated method stub
+        
+        }
+
+    public void processAnswer(ByteBuffer answer, OfferAnswerListener offerAnswerListener) throws IOException
+        {
+        // TODO Auto-generated method stub
+        
+        }
+
+    public void processOffer(ByteBuffer offer, OfferAnswerListener offerAnswerListener) throws IOException
         {
         // TODO Auto-generated method stub
         

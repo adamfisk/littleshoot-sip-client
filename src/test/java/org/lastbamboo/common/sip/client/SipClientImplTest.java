@@ -19,7 +19,10 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.mina.common.ByteBuffer;
 import org.lastbamboo.common.offer.answer.OfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
+import org.lastbamboo.common.offer.answer.OfferAnswerListener;
+import org.lastbamboo.common.offer.answer.SocketOfferAnswer;
 import org.lastbamboo.common.sip.client.stubs.OfferAnswerStub;
+import org.lastbamboo.common.sip.client.stubs.SocketOfferAnswerStub;
 import org.lastbamboo.common.sip.stack.SipUriFactory;
 import org.lastbamboo.common.sip.stack.SipUriFactoryImpl;
 import org.lastbamboo.common.sip.stack.message.SipMessage;
@@ -119,16 +122,28 @@ public class SipClientImplTest extends TestCase
                 {
                 return new OfferAnswerStub();
                 }
+
+            public SocketOfferAnswer createSocketOfferer()
+                {
+                return new SocketOfferAnswerStub();
+                }
             };
             
         final SipClientTracker sipClientTracker = 
             (SipClientTracker) context.getBean("sipClientTracker");
         
         final CrlfDelayCalculator calculator = new DefaultCrlfDelayCalculator();
+        final OfferAnswerListener offerAnswerListener = 
+            new OfferAnswerListener()
+            {
+            public void onOfferAnswerComplete()
+                {
+                }
+            };
         final SipClient client = 
             new SipClientImpl(clientUri, proxyUri, 
                 messageFactory, transactionTracker, 
-                offerAnswerFactory, uriUtils, transportLayer, 
+                offerAnswerFactory, offerAnswerListener, uriUtils, transportLayer, 
                 sipClientTracker, calculator);
        
         client.connect();

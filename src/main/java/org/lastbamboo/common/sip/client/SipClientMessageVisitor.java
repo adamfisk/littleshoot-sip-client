@@ -7,6 +7,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.mina.common.ByteBuffer;
 import org.lastbamboo.common.offer.answer.OfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
+import org.lastbamboo.common.offer.answer.OfferAnswerListener;
 import org.lastbamboo.common.sip.stack.message.DoubleCrlfKeepAlive;
 import org.lastbamboo.common.sip.stack.message.Invite;
 import org.lastbamboo.common.sip.stack.message.Register;
@@ -30,6 +31,7 @@ public class SipClientMessageVisitor implements SipMessageVisitor
     private final SipTransactionTracker m_transactionTracker;
     private final SipClient m_sipClient;
     private final OfferAnswerFactory m_offerAnswerFactory;
+    private final OfferAnswerListener m_offerAnswerListener;
     
     /**
      * Visitor for message received on SIP clients.
@@ -38,14 +40,17 @@ public class SipClientMessageVisitor implements SipMessageVisitor
      * @param tracker The tracker for looking up the corresponding transactions
      * for received messages.
      * @param offerAnswerFactory Class that processes incoming INVITEs.
+     * @param offerAnswerListener 
      */
     public SipClientMessageVisitor(final SipClient sipClient,
         final SipTransactionTracker tracker,
-        final OfferAnswerFactory offerAnswerFactory)
+        final OfferAnswerFactory offerAnswerFactory, 
+        final OfferAnswerListener offerAnswerListener)
         {
         this.m_sipClient = sipClient;
         this.m_transactionTracker = tracker;
         this.m_offerAnswerFactory = offerAnswerFactory;
+        this.m_offerAnswerListener = offerAnswerListener;
         }
 
     public void visitRequestTimedOut(final RequestTimeoutResponse response)
@@ -70,7 +75,7 @@ public class SipClientMessageVisitor implements SipMessageVisitor
                 this.m_offerAnswerFactory.createAnswerer(offer);
             final byte[] answer = offerAnswer.generateAnswer();
             this.m_sipClient.writeInviteOk(invite, ByteBuffer.wrap(answer));
-            offerAnswer.processOffer(offer);
+            offerAnswer.processOffer(offer, this.m_offerAnswerListener);
             }
         catch (final IOException e)
             {

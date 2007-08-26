@@ -30,6 +30,7 @@ import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.transport.socket.nio.SocketConnector;
 import org.apache.mina.transport.socket.nio.SocketConnectorConfig;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
+import org.lastbamboo.common.offer.answer.OfferAnswerListener;
 import org.lastbamboo.common.sip.stack.codec.SipIoHandler;
 import org.lastbamboo.common.sip.stack.codec.SipProtocolCodecFactory;
 import org.lastbamboo.common.sip.stack.message.Invite;
@@ -101,6 +102,8 @@ public class SipClientImpl implements SipClient,
     private int m_responsesWritten = 0;
 
     private final OfferAnswerFactory m_offerAnswerFactory;
+
+    private final OfferAnswerListener m_offerAnswerListener;
     
     /**
      * Creates a new SIP client connection to an individual SIP proxy server.
@@ -112,6 +115,7 @@ public class SipClientImpl implements SipClient,
      * transactions.
      * @param offerAnswerFactory Factory for creating classes capable of 
      * handling offers and answers.
+     * @param offerAnswerListener The listener for offer/answer events.
      * @param uriUtils Utilities for handling SIP URIs.
      * @param transportLayer The class for actually sending SIP messages.
      * @param closeListener The class that listens for closed connections to
@@ -123,11 +127,13 @@ public class SipClientImpl implements SipClient,
         final SipMessageFactory messageFactory, 
         final SipTransactionTracker transactionTracker,
         final OfferAnswerFactory offerAnswerFactory,
+        final OfferAnswerListener offerAnswerListener,
         final UriUtils uriUtils, 
         final SipTcpTransportLayer transportLayer,
         final SipClientCloseListener closeListener, 
         final CrlfDelayCalculator calculator) 
         {
+        m_offerAnswerListener = offerAnswerListener;
         // Configure the MINA buffers for optimal performance.
         ByteBuffer.setUseDirectBuffers(false);
         ByteBuffer.setAllocator(new SimpleByteBufferAllocator());
@@ -186,7 +192,7 @@ public class SipClientImpl implements SipClient,
         {
         final SipMessageVisitorFactory visitorFactory = 
             new SipClientMessageVisitorFactory(this, this.m_transactionTracker, 
-                this.m_offerAnswerFactory);
+                this.m_offerAnswerFactory, this.m_offerAnswerListener);
         
         final SipHeaderFactory headerFactory = new SipHeaderFactoryImpl();
 
