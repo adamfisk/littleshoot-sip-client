@@ -20,9 +20,9 @@ import org.apache.mina.common.ByteBuffer;
 import org.lastbamboo.common.offer.answer.OfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.offer.answer.OfferAnswerListener;
-import org.lastbamboo.common.offer.answer.SocketOfferAnswer;
+import org.lastbamboo.common.offer.answer.MediaOfferAnswer;
 import org.lastbamboo.common.sip.client.stubs.OfferAnswerStub;
-import org.lastbamboo.common.sip.client.stubs.SocketOfferAnswerStub;
+import org.lastbamboo.common.sip.client.stubs.MediaOfferAnswerStub;
 import org.lastbamboo.common.sip.stack.SipUriFactory;
 import org.lastbamboo.common.sip.stack.SipUriFactoryImpl;
 import org.lastbamboo.common.sip.stack.message.SipMessage;
@@ -118,14 +118,14 @@ public class SipClientImplTest extends TestCase
                 return new OfferAnswerStub();
                 }
 
-            public OfferAnswer createAnswerer(ByteBuffer offer)
+            public MediaOfferAnswer createAnswerer(ByteBuffer offer)
                 {
-                return new OfferAnswerStub();
+                return new MediaOfferAnswerStub();
                 }
 
-            public SocketOfferAnswer createSocketOfferer()
+            public MediaOfferAnswer createMediaOfferer()
                 {
-                return new SocketOfferAnswerStub();
+                return new MediaOfferAnswerStub();
                 }
             };
             
