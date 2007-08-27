@@ -136,7 +136,7 @@ public class SipClientImplTest extends TestCase
         final OfferAnswerListener offerAnswerListener = 
             new OfferAnswerListener()
             {
-            public void onOfferAnswerComplete()
+            public void onOfferAnswerComplete(final MediaOfferAnswer offerAnswer)
                 {
                 }
             };
