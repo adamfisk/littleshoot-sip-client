@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.mina.common.ByteBuffer;
-import org.lastbamboo.common.offer.answer.OfferAnswer;
+import org.lastbamboo.common.offer.answer.MediaOfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.offer.answer.OfferAnswerListener;
 import org.lastbamboo.common.sip.stack.message.DoubleCrlfKeepAlive;
@@ -71,7 +71,7 @@ public class SipClientMessageVisitor implements SipMessageVisitor
         // Process the invite statelessly.
         try
             {
-            final OfferAnswer offerAnswer = 
+            final MediaOfferAnswer offerAnswer = 
                 this.m_offerAnswerFactory.createAnswerer(offer);
             final byte[] answer = offerAnswer.generateAnswer();
             this.m_sipClient.writeInviteOk(invite, ByteBuffer.wrap(answer));

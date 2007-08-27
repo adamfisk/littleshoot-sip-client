@@ -15,6 +15,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.mina.common.ByteBuffer;
 import org.apache.mina.common.ConnectFuture;
+import org.apache.mina.common.ExecutorThreadModel;
 import org.apache.mina.common.IoConnector;
 import org.apache.mina.common.IoConnectorConfig;
 import org.apache.mina.common.IoFuture;
@@ -25,6 +26,7 @@ import org.apache.mina.common.IoServiceConfig;
 import org.apache.mina.common.IoServiceListener;
 import org.apache.mina.common.IoSession;
 import org.apache.mina.common.SimpleByteBufferAllocator;
+import org.apache.mina.common.ThreadModel;
 import org.apache.mina.common.WriteFuture;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.transport.socket.nio.SocketConnector;
@@ -171,7 +173,6 @@ public class SipClientImpl implements SipClient,
     
     public void connect() throws IOException
         {
-        
         final String host = this.m_uriUtils.getHostInSipUri(this.m_proxyUri);  
         final int port = this.m_uriUtils.getPortInSipUri(this.m_proxyUri);
         final InetSocketAddress remoteAddress = 
@@ -200,6 +201,9 @@ public class SipClientImpl implements SipClient,
         connector.addListener(this);
         
         final IoConnectorConfig config = new SocketConnectorConfig();
+        final ThreadModel threadModel = 
+            ExecutorThreadModel.getInstance("SIP-Client");
+        config.setThreadModel(threadModel);
         
         connector.getFilterChain().addLast("codec",
             new ProtocolCodecFilter(new SipProtocolCodecFactory(headerFactory)));
