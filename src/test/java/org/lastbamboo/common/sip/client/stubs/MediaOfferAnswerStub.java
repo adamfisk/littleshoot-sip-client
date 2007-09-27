@@ -13,4 +13,10 @@ public class MediaOfferAnswerStub extends OfferAnswerStub
         
         }
 
+    public void close()
+        {
+        // TODO Auto-generated method stub
+        
+        }
+
     }
