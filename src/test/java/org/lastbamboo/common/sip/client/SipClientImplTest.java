@@ -139,6 +139,10 @@ public class SipClientImplTest extends TestCase
             public void onOfferAnswerComplete(final MediaOfferAnswer offerAnswer)
                 {
                 }
+
+            public void onOfferAnswerFailed(MediaOfferAnswer mediaOfferAnswer)
+                {
+                }
             };
         final SipClient client = 
             new SipClientImpl(clientUri, proxyUri, 
