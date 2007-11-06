@@ -202,7 +202,7 @@ public class SipClientImpl implements SipClient,
         
         final IoConnectorConfig config = new SocketConnectorConfig();
         final ThreadModel threadModel = 
-            ExecutorThreadModel.getInstance("SIP-Client");
+            ExecutorThreadModel.getInstance("SIP-Client-MINA");
         config.setThreadModel(threadModel);
         
         connector.getFilterChain().addLast("codec",
