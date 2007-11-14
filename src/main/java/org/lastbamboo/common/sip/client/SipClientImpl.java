@@ -221,14 +221,17 @@ public class SipClientImpl implements SipClient,
             throw new IOException("Could not connect to server at: "+
                 remoteAddress);
             }
-        else
+        final IoSession session = future.getSession();
+        if (session == null)
             {
-            if (LOG.isDebugEnabled())
-                {
-                LOG.debug("Successfully connected to the SIP server!");
-                }
-            return future.getSession();
+            throw new IOException("Could not connecto to server at: "+
+                remoteAddress);
             }
+        if (LOG.isDebugEnabled())
+            {
+            LOG.debug("Successfully connected to the SIP server!");
+            }
+        return session;
         }
     
 
