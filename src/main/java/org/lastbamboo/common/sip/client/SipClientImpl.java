@@ -439,7 +439,7 @@ public class SipClientImpl implements SipClient,
         LOG.debug("Session created.");
         }
 
-    public void sessionDestroyed(IoSession session)
+    public void sessionDestroyed(final IoSession session)
         {
         LOG.warn("Lost connection to the registrar...notifying listener...");
         this.m_closed = true;

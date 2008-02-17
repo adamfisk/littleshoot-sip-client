@@ -41,8 +41,7 @@ public class SipClientTrackerImpl implements SipClientTracker
      * Creates a new class for keeping track of SIP client connections to proxy
      * servers.
      */
-    public SipClientTrackerImpl
-            ()
+    public SipClientTrackerImpl()
         {
         m_clients = new ArrayList<SipClient>();
         m_clientListenerMap = 
@@ -50,11 +49,7 @@ public class SipClientTrackerImpl implements SipClientTracker
         m_counter = 0;
         }
     
-    /**
-     * {@inheritDoc}
-     */
-    public SipClient getSipClient
-            ()
+    public SipClient getSipClient()
         {
         // Just keep cycling through the proxies.
         synchronized (this.m_clients)
@@ -76,12 +71,7 @@ public class SipClientTrackerImpl implements SipClientTracker
             }
         }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void addSipClient
-            (final SipClient client,
-             final ProxyRegistrationListener listener)
+    public void addSipClient(final SipClient client, final ProxyRegistrationListener listener)
         {
         LOG.debug("Adding SIP client: "+client);
         
@@ -103,8 +93,12 @@ public class SipClientTrackerImpl implements SipClientTracker
             // We don't care about the reader/writer in this case.  It may be 
             // null. This indicates that we've lost the connection to the 
             // registrar.
-            final ProxyRegistrationListener listener =
-                m_clientListenerMap.get(client);
+            final ProxyRegistrationListener listener = m_clientListenerMap.get(client);
+            if (listener == null)
+                {
+                LOG.warn("No listener for client "+client+" map is: "+this.m_clientListenerMap);
+                return;
+                }
             this.m_clientListenerMap.remove(client);
             
             // Notify the listener.
