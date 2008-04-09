@@ -4,6 +4,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Class that continually sends keep alive messages to the SIP proxy, as 
  * specified in:<p>
@@ -13,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 public class CrlfKeepAliveSender
     {
 
+    private final Logger m_log = LoggerFactory.getLogger(getClass());
     private final SipClient m_sipClient;
 
     private final ScheduledExecutorService m_executor = 
@@ -53,10 +57,16 @@ public class CrlfKeepAliveSender
             {
             public void run()
                 {
-                m_sipClient.writeCrlfKeepAlive();
-                
-                // Schedule the next one.
-                scheduleCrlf();
+                try
+                    {
+                    m_sipClient.writeCrlfKeepAlive();
+                    // Schedule the next one.
+                    scheduleCrlf();
+                    }
+                catch (final Throwable t)
+                    {
+                    m_log.error("Unexpected throwable", t);
+                    }
                 }
             };
             

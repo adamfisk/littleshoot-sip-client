@@ -258,27 +258,39 @@ public class SipClientImpl implements SipClient,
             {
             public void run()
                 {
-                m_transportLayer.writeCrlfKeepAlive(m_ioSession);
+                try
+                    {
+                    m_transportLayer.writeCrlfKeepAlive(m_ioSession);
+                    }
+                catch (final Throwable t)
+                    {
+                    LOG.error("Caught throwable", t);
+                    }
                 }
             };
 
         this.m_messageExecutor.execute(runner);
         }
     
-    public void invite(final URI sipUri, 
-        final byte[] body, final SipTransactionListener listener) 
-        throws IOException
+    public void invite(final URI sipUri, final byte[] body, 
+        final SipTransactionListener listener) throws IOException
         {
         final Runnable runner = new Runnable()
             {
-
             public void run()
                 {
-                final Invite request = m_messageFactory.createInviteRequest(
-                    "Anonymous", sipUri, m_sipClientUri, m_instanceId, 
-                    m_contactUri, ByteBuffer.wrap(body));
+                try
+                    {
+                    final Invite request = m_messageFactory.createInviteRequest(
+                        "Anonymous", sipUri, m_sipClientUri, m_instanceId, 
+                        m_contactUri, ByteBuffer.wrap(body));
                 
-                m_transportLayer.invite(request, m_ioSession, listener);
+                    m_transportLayer.invite(request, m_ioSession, listener);
+                    }
+                catch (final Throwable t)
+                    {
+                    LOG.error("Unexpected throwable", t);
+                    }
                 }
             };
         
@@ -411,9 +423,16 @@ public class SipClientImpl implements SipClient,
             public void run()
                 {
                 // Note there is no Via handling here.  This is for UASes 
-                // sending responses, so we don't need to strip any Vias.                
-                final WriteFuture wf = m_ioSession.write(message);
-                wf.addListener(SipClientImpl.this);
+                // sending responses, so we don't need to strip any Vias.   
+                try
+                    {
+                    final WriteFuture wf = m_ioSession.write(message);
+                    wf.addListener(SipClientImpl.this);
+                    }
+                catch (final Throwable t)
+                    {
+                    LOG.error("Unexpected throwable", t);
+                    }
                 }
             };
     
