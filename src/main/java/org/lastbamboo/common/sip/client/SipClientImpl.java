@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.id.uuid.UUID;
+import org.apache.commons.io.IOExceptionWithCause;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.mina.common.ByteBuffer;
@@ -25,6 +26,7 @@ import org.apache.mina.common.IoService;
 import org.apache.mina.common.IoServiceConfig;
 import org.apache.mina.common.IoServiceListener;
 import org.apache.mina.common.IoSession;
+import org.apache.mina.common.RuntimeIOException;
 import org.apache.mina.common.SimpleByteBufferAllocator;
 import org.apache.mina.common.ThreadModel;
 import org.apache.mina.common.WriteFuture;
@@ -212,7 +214,6 @@ public class SipClientImpl implements SipClient,
         
         final ConnectFuture future = 
             connector.connect(remoteAddress, handler, config);
-        
         future.join();
         
         if (!future.isConnected())
@@ -221,16 +222,24 @@ public class SipClientImpl implements SipClient,
             throw new IOException("Could not connect to server at: "+
                 remoteAddress);
             }
-        final IoSession session = future.getSession();
+        
+        final IoSession session;
+        try
+            {
+            session = future.getSession();
+            }
+        catch (final RuntimeIOException e)
+            {
+            // This seems to get thrown when we can't connect at all.
+            LOG.warn("Could not connect to SIP server at: " + remoteAddress, e);
+            throw new IOExceptionWithCause("Couldn't connect to SIP server", e);
+            }
         if (session == null)
             {
-            throw new IOException("Could not connecto to server at: "+
+            throw new IOException("Could not connect to server at: "+
                 remoteAddress);
             }
-        if (LOG.isDebugEnabled())
-            {
-            LOG.debug("Successfully connected to the SIP server!");
-            }
+        LOG.debug("Successfully connected to the SIP server!");
         return session;
         }
     
@@ -248,10 +257,7 @@ public class SipClientImpl implements SipClient,
         {
         if (this.m_closed)
             {
-            if (LOG.isDebugEnabled())
-                {
-                LOG.debug("Ignoring CRLF call on closed SIP client.");
-                }
+            LOG.debug("Ignoring CRLF call on closed SIP client.");
             return;
             }
         final Runnable runner = new Runnable()

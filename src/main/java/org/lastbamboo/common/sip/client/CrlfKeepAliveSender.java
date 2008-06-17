@@ -1,9 +1,5 @@
 package org.lastbamboo.common.sip.client;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,10 +15,9 @@ public class CrlfKeepAliveSender
     private final Logger m_log = LoggerFactory.getLogger(getClass());
     private final SipClient m_sipClient;
 
-    private final ScheduledExecutorService m_executor = 
-        Executors.newSingleThreadScheduledExecutor();
-
     private final CrlfDelayCalculator m_delayCalculator;
+    
+    private volatile boolean m_stopped = false;
     
     /**
      * Creates a new class that uses the CRLF keep alive technique specified
@@ -45,7 +40,8 @@ public class CrlfKeepAliveSender
      */
     public void stop()
         {
-        this.m_executor.shutdownNow();
+        m_log.debug("Stoping Keep Alive sender...");
+        this.m_stopped = true;
         }
     
     /**
@@ -53,25 +49,27 @@ public class CrlfKeepAliveSender
      */
     public void scheduleCrlf()
         {
-        final Runnable command = new Runnable()
+        final Runnable crlfRunner = new Runnable()
             {
             public void run()
                 {
-                try
+                while (!m_stopped)
                     {
-                    m_sipClient.writeCrlfKeepAlive();
-                    // Schedule the next one.
-                    scheduleCrlf();
-                    }
-                catch (final Throwable t)
-                    {
-                    m_log.error("Unexpected throwable", t);
+                    final int delay = m_delayCalculator.calculateDelay();
+                    try
+                        {
+                        Thread.sleep(delay);
+                        m_sipClient.writeCrlfKeepAlive();
+                        }
+                    catch (final InterruptedException e)
+                        {
+                        m_log.error("Interrupted?", e);
+                        }
                     }
                 }
             };
-            
-        // This will schedule the CRLF send *once* after the calculated delay.
-        final int delay = this.m_delayCalculator.calculateDelay();
-        m_executor.schedule(command, delay, TimeUnit.MILLISECONDS);
+        final Thread crlfThread = new Thread(crlfRunner, "CRLF-Thread");
+        crlfThread.setDaemon(true);
+        crlfThread.start();
         }
     }
