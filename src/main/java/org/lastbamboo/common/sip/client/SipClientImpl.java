@@ -35,6 +35,7 @@ import org.apache.mina.transport.socket.nio.SocketConnector;
 import org.apache.mina.transport.socket.nio.SocketConnectorConfig;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.offer.answer.OfferAnswerListener;
+import org.lastbamboo.common.sip.stack.IdleSipSessionListener;
 import org.lastbamboo.common.sip.stack.codec.SipIoHandler;
 import org.lastbamboo.common.sip.stack.codec.SipProtocolCodecFactory;
 import org.lastbamboo.common.sip.stack.message.Invite;
@@ -108,6 +109,8 @@ public class SipClientImpl implements SipClient,
     private final OfferAnswerFactory m_offerAnswerFactory;
 
     private final OfferAnswerListener m_offerAnswerListener;
+
+    private final IdleSipSessionListener m_idleSipSessionListener;
     
     /**
      * Creates a new SIP client connection to an individual SIP proxy server.
@@ -126,6 +129,7 @@ public class SipClientImpl implements SipClient,
      * proxies.
      * @param calculator The class that calculates the delay between double 
      * CRLF keep-alive messages, passed in for testing.
+     * @param idleSipSessionListener Listener for idle SIP sessions.
      */
     public SipClientImpl(final URI sipClientUri, final URI proxyUri,
         final SipMessageFactory messageFactory, 
@@ -135,7 +139,8 @@ public class SipClientImpl implements SipClient,
         final UriUtils uriUtils, 
         final SipTcpTransportLayer transportLayer,
         final SipClientCloseListener closeListener, 
-        final CrlfDelayCalculator calculator) 
+        final CrlfDelayCalculator calculator,
+        final IdleSipSessionListener idleSipSessionListener) 
         {
         m_offerAnswerListener = offerAnswerListener;
         // Configure the MINA buffers for optimal performance.
@@ -171,6 +176,7 @@ public class SipClientImpl implements SipClient,
             }
 
         this.m_crlfKeepAliveSender = new CrlfKeepAliveSender(this, calculator);
+        this.m_idleSipSessionListener = idleSipSessionListener;
         }
     
     public void connect() throws IOException
@@ -210,7 +216,8 @@ public class SipClientImpl implements SipClient,
         connector.getFilterChain().addLast("codec",
             new ProtocolCodecFilter(new SipProtocolCodecFactory(headerFactory)));
         
-        final IoHandler handler = new SipIoHandler(visitorFactory);
+        final IoHandler handler = 
+            new SipIoHandler(visitorFactory, this.m_idleSipSessionListener);
         
         final ConnectFuture future = 
             connector.connect(remoteAddress, handler, config);
@@ -456,7 +463,7 @@ public class SipClientImpl implements SipClient,
         final SocketAddress serviceAddress, final IoHandler handler, 
         final IoServiceConfig config)
         {
-        LOG.warn("Service deactivated.");
+        LOG.debug("Service deactivated.");
         }
 
     public void sessionCreated(final IoSession session)
@@ -466,7 +473,7 @@ public class SipClientImpl implements SipClient,
 
     public void sessionDestroyed(final IoSession session)
         {
-        LOG.warn("Lost connection to the registrar...notifying listener...");
+        LOG.debug("Lost connection to the registrar...notifying listener...");
         this.m_closed = true;
         this.m_crlfKeepAliveSender.stop();
         this.m_messageExecutor.shutdownNow();
