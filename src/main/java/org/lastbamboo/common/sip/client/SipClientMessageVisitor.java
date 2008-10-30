@@ -2,8 +2,6 @@ package org.lastbamboo.common.sip.client;
 
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.mina.common.ByteBuffer;
 import org.lastbamboo.common.offer.answer.MediaOfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
@@ -19,6 +17,8 @@ import org.lastbamboo.common.sip.stack.message.UnknownSipRequest;
 import org.lastbamboo.common.sip.stack.transaction.client.SipClientTransaction;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionTracker;
 import org.lastbamboo.common.util.mina.MinaUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class that visits incoming SIP messages for SIP clients.
@@ -26,8 +26,7 @@ import org.lastbamboo.common.util.mina.MinaUtils;
 public class SipClientMessageVisitor implements SipMessageVisitor
     {
 
-    private static final Log LOG = LogFactory.getLog(
-        SipClientMessageVisitor.class);
+    private final Logger m_log = LoggerFactory.getLogger(getClass());
     private final SipTransactionTracker m_transactionTracker;
     private final SipClient m_sipClient;
     private final OfferAnswerFactory m_offerAnswerFactory;
@@ -55,16 +54,13 @@ public class SipClientMessageVisitor implements SipMessageVisitor
 
     public void visitRequestTimedOut(final RequestTimeoutResponse response)
         {
-        LOG.debug("Visiting request timed out response: "+response);
+        m_log.debug("Visiting request timed out response: "+response);
         notifyTransaction(response);
         }
 
     public void visitInvite(final Invite invite)
         {
-        if (LOG.isDebugEnabled())
-            {
-            LOG.debug("Received invite: "+invite);
-            }
+        m_log.debug("Received invite: {}", invite);
         
         final ByteBuffer offer = invite.getBody();
         
@@ -81,37 +77,39 @@ public class SipClientMessageVisitor implements SipMessageVisitor
             {
             // This indicates the SDP contained data we could not understand,
             // so we need to send an error response.
-            LOG.warn("We could not understand the offer: " +
+            m_log.warn("We could not understand the offer: " +
                 MinaUtils.toAsciiString(offer));
             // Generate a SIP error response.
             // See http://tools.ietf.org/html/rfc3261#section-13.3.1.3
             this.m_sipClient.writeInviteRejected(invite, 488, 
                 "Not Acceptable Here");
             }
+        
+        m_log.debug("Done processing INVITE!!!");
         }
 
     public void visitRegister(final Register register)
         {
         // Should never happen on UAS.
-        LOG.error("Got REGISTER request on UAS -- weird: "+register);
+        m_log.error("Got REGISTER request on UAS -- weird: "+register);
         }
 
     public void visitDoubleCrlfKeepAlive(final DoubleCrlfKeepAlive keepAlive)
         {
         // Should never happen on UAS.
-        LOG.error("Got keep-alive request on UAS -- weird: ");
+        m_log.error("Got keep-alive request on UAS -- weird: ");
         }
     
     public void visitUnknownRequest(final UnknownSipRequest request)
         {
-        LOG.error("Unknown request on UAS: "+request);
+        m_log.error("Unknown request on UAS: "+request);
         }
 
     public void visitResponse(final SipResponse response)
         {
         // Identify the transaction for this response and the corresponding 
         // session it creates.
-        LOG.debug("Visiting OK response: "+ response);
+        m_log.debug("Visiting OK response: "+ response);
         notifyTransaction(response);
         }
     
@@ -120,11 +118,11 @@ public class SipClientMessageVisitor implements SipMessageVisitor
         {
         final SipClientTransaction ct = 
             this.m_transactionTracker.getClientTransaction(response);
-        LOG.debug("Accessed transaction: "+ct);
+        m_log.debug("Accessed transaction: "+ct);
         
         if (ct == null)
             {
-            LOG.warn("No matching transaction for response: "+response);
+            m_log.warn("No matching transaction for response: "+response);
             return;
             }
         
