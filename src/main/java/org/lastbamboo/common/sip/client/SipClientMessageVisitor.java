@@ -1,9 +1,8 @@
 package org.lastbamboo.common.sip.client;
 
-import java.io.IOException;
-
 import org.apache.mina.common.ByteBuffer;
 import org.lastbamboo.common.offer.answer.MediaOfferAnswer;
+import org.lastbamboo.common.offer.answer.OfferAnswerConnectException;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.offer.answer.OfferAnswerListener;
 import org.lastbamboo.common.sip.stack.message.DoubleCrlfKeepAlive;
@@ -64,26 +63,27 @@ public class SipClientMessageVisitor implements SipMessageVisitor
         
         final ByteBuffer offer = invite.getBody();
         
-        // Process the invite statelessly.
+        // Process the invite.
+        final MediaOfferAnswer offerAnswer;
         try
             {
-            final MediaOfferAnswer offerAnswer = 
-                this.m_offerAnswerFactory.createAnswerer(offer);
-            final byte[] answer = offerAnswer.generateAnswer();
-            this.m_sipClient.writeInviteOk(invite, ByteBuffer.wrap(answer));
-            offerAnswer.processOffer(offer, this.m_offerAnswerListener);
+            offerAnswer = this.m_offerAnswerFactory.createAnswerer(offer);
             }
-        catch (final IOException e)
+        catch (final OfferAnswerConnectException e)
             {
-            // This indicates the SDP contained data we could not understand,
-            // so we need to send an error response.
-            m_log.warn("We could not understand the offer: " +
-                MinaUtils.toAsciiString(offer));
+            // This indicates we could not establish the necessary connections 
+            // for generating our candidates.
+            m_log.warn("We could not create candidates for offer: " +
+                MinaUtils.toAsciiString(offer), e);
             // Generate a SIP error response.
             // See http://tools.ietf.org/html/rfc3261#section-13.3.1.3
             this.m_sipClient.writeInviteRejected(invite, 488, 
                 "Not Acceptable Here");
+            return;
             }
+        final byte[] answer = offerAnswer.generateAnswer();
+        this.m_sipClient.writeInviteOk(invite, ByteBuffer.wrap(answer));
+        offerAnswer.processOffer(offer, this.m_offerAnswerListener);
         
         m_log.debug("Done processing INVITE!!!");
         }
