@@ -14,7 +14,6 @@ import org.apache.commons.id.uuid.UUID;
 import org.apache.commons.io.IOExceptionWithCause;
 import org.apache.mina.common.ByteBuffer;
 import org.apache.mina.common.ConnectFuture;
-import org.apache.mina.common.ExecutorThreadModel;
 import org.apache.mina.common.IoConnector;
 import org.apache.mina.common.IoConnectorConfig;
 import org.apache.mina.common.IoFuture;
@@ -29,6 +28,7 @@ import org.apache.mina.common.SimpleByteBufferAllocator;
 import org.apache.mina.common.ThreadModel;
 import org.apache.mina.common.WriteFuture;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
+import org.apache.mina.filter.executor.ExecutorFilter;
 import org.apache.mina.transport.socket.nio.SocketConnector;
 import org.apache.mina.transport.socket.nio.SocketConnectorConfig;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
@@ -90,6 +90,7 @@ public class SipClientImpl implements SipClient,
 
     private boolean m_registrationSucceeded;
     
+    
     /**
      * The executor is used to queue up messages in order.  This allows 
      * different threads to send messages without worrying about them getting
@@ -98,6 +99,14 @@ public class SipClientImpl implements SipClient,
     private final ExecutorService m_messageExecutor = 
         Executors.newSingleThreadExecutor();
 
+    /**
+     * Thread pool for read/write operations for the SIP client as well
+     * as for processing of actual messages -- we use the same thread pool 
+     * for both.  See: http://mina.apache.org/configuring-thread-model.html
+     */
+    private final ExecutorService m_acceptingExecutor = 
+        Executors.newCachedThreadPool();
+    
     private final CrlfKeepAliveSender m_crlfKeepAliveSender;
 
     private volatile boolean m_closed;
@@ -205,16 +214,23 @@ public class SipClientImpl implements SipClient,
         
         final SipHeaderFactory headerFactory = new SipHeaderFactoryImpl();
 
-        final IoConnector connector = new SocketConnector();
+        // The thread model configuration is very important here.  The SIP
+        // "client" is ultimately acting as a gateway to the HTTP server, so
+        // the thread configuration should be a server configuration.
+        final IoConnector connector = 
+            new SocketConnector(4, this.m_acceptingExecutor);
         connector.addListener(this);
         
         final IoConnectorConfig config = new SocketConnectorConfig();
-        final ThreadModel threadModel = 
-            ExecutorThreadModel.getInstance("SIP-Client-MINA");
-        config.setThreadModel(threadModel);
+        
+        //final ThreadModel threadModel = 
+          //  ExecutorThreadModel.getInstance("SIP-Client-MINA");
+        config.setThreadModel(ThreadModel.MANUAL);
         
         connector.getFilterChain().addLast("codec",
             new ProtocolCodecFilter(new SipProtocolCodecFactory(headerFactory)));
+        connector.getFilterChain().addLast("threadPool", 
+            new ExecutorFilter(this.m_acceptingExecutor));
         
         final IoHandler handler = 
             new SipIoHandler(visitorFactory, this.m_idleSipSessionListener);
@@ -484,7 +500,8 @@ public class SipClientImpl implements SipClient,
         m_log.debug("Lost connection to the registrar...notifying listener...");
         this.m_closed = true;
         this.m_crlfKeepAliveSender.stop();
-        this.m_messageExecutor.shutdownNow();
+        this.m_messageExecutor.shutdown();
+        this.m_acceptingExecutor.shutdown();
         this.m_closeListener.onClose(this);
         }
     }
