@@ -12,8 +12,6 @@ import java.util.concurrent.Executors;
 
 import org.apache.commons.id.uuid.UUID;
 import org.apache.commons.io.IOExceptionWithCause;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.mina.common.ByteBuffer;
 import org.apache.mina.common.ConnectFuture;
 import org.apache.mina.common.ExecutorThreadModel;
@@ -50,6 +48,8 @@ import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionTracker;
 import org.lastbamboo.common.sip.stack.transport.SipTcpTransportLayer;
 import org.lastbamboo.common.sip.stack.util.UriUtils;
 import org.lastbamboo.common.util.NetworkUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Creates a new SIP client.  This class supplies the interface for writing all
@@ -60,7 +60,7 @@ public class SipClientImpl implements SipClient,
     SipTransactionListener, IoFutureListener, IoServiceListener
     {
 
-    private final Log LOG = LogFactory.getLog(SipClientImpl.class);
+    private final Logger m_log = LoggerFactory.getLogger(getClass());
     
     private final UUID m_instanceId = UUID.randomUUID();
     
@@ -153,7 +153,7 @@ public class SipClientImpl implements SipClient,
             }
         catch (final UnknownHostException e)
             {
-            LOG.error("Could not resolve localhost", e);
+            m_log.error("Could not resolve localhost", e);
             throw new IllegalArgumentException("Could not resolve localhost");
             }
         this.m_sipClientUri = sipClientUri;
@@ -171,7 +171,7 @@ public class SipClientImpl implements SipClient,
             }
         catch (final URISyntaxException e)
             {
-            LOG.error("Could not create URI", e);
+            m_log.error("Could not create URI", e);
             throw new IllegalArgumentException("Bad URI: "+sipClientUri);
             }
 
@@ -186,7 +186,7 @@ public class SipClientImpl implements SipClient,
         final InetSocketAddress remoteAddress = 
             new InetSocketAddress(host, port);
         
-        LOG.debug("Connecting to registrar at: "+remoteAddress);
+        m_log.debug("Connecting to registrar at: "+remoteAddress);
         this.m_ioSession = connect(remoteAddress);
         }
     
@@ -225,7 +225,7 @@ public class SipClientImpl implements SipClient,
         
         if (!future.isConnected())
             {
-            LOG.error("Could not connect to server at: "+remoteAddress);
+            m_log.error("Could not connect to server at: "+remoteAddress);
             throw new IOException("Could not connect to server at: "+
                 remoteAddress);
             }
@@ -238,7 +238,7 @@ public class SipClientImpl implements SipClient,
         catch (final RuntimeIOException e)
             {
             // This seems to get thrown when we can't connect at all.
-            LOG.warn("Could not connect to SIP server at: " + remoteAddress, e);
+            m_log.warn("Could not connect to SIP server at: " + remoteAddress, e);
             throw new IOExceptionWithCause("Couldn't connect to SIP server", e);
             }
         if (session == null)
@@ -246,7 +246,7 @@ public class SipClientImpl implements SipClient,
             throw new IOException("Could not connect to server at: "+
                 remoteAddress);
             }
-        LOG.debug("Successfully connected to the SIP server!");
+        m_log.debug("Successfully connected to the SIP server!");
         return session;
         }
     
@@ -264,7 +264,7 @@ public class SipClientImpl implements SipClient,
         {
         if (this.m_closed)
             {
-            LOG.debug("Ignoring CRLF call on closed SIP client.");
+            m_log.debug("Ignoring CRLF call on closed SIP client.");
             return;
             }
         final Runnable runner = new Runnable()
@@ -273,11 +273,19 @@ public class SipClientImpl implements SipClient,
                 {
                 try
                     {
-                    m_transportLayer.writeCrlfKeepAlive(m_ioSession);
+                    final WriteFuture wf =
+                        m_transportLayer.writeCrlfKeepAlive(m_ioSession);
+                    wf.addListener(new IoFutureListener()
+                        {
+                        public void operationComplete(final IoFuture future)
+                            {
+                            m_log.debug("Finished writing CRLF...");
+                            }
+                        });
                     }
                 catch (final Throwable t)
                     {
-                    LOG.error("Caught throwable", t);
+                    m_log.error("Caught throwable", t);
                     }
                 }
             };
@@ -302,7 +310,7 @@ public class SipClientImpl implements SipClient,
                     }
                 catch (final Throwable t)
                     {
-                    LOG.error("Unexpected throwable", t);
+                    m_log.error("Unexpected throwable", t);
                     }
                 }
             };
@@ -360,14 +368,14 @@ public class SipClientImpl implements SipClient,
                     }
                 catch (final InterruptedException e)
                     {
-                    LOG.error("Somehow interrupted!!", e);
+                    m_log.error("Somehow interrupted!!", e);
                     throw new IOException("Did not get response!!");
                     }
                 }
             
             if (!this.m_registrationSucceeded)
                 {
-                LOG.warn("Could not register!!");
+                m_log.warn("Could not register!!");
                 throw new IOException("Registration failed!!");
                 }
             }
@@ -375,7 +383,7 @@ public class SipClientImpl implements SipClient,
 
     public void onTransactionSucceeded(final SipMessage message)
         {
-        LOG.debug("Received OK response to register request: "+message);
+        m_log.debug("Received OK response to register request: "+message);
         synchronized (REGISTER_OK_LOCK)
             {
             this.m_receivedResponse = true;
@@ -386,7 +394,7 @@ public class SipClientImpl implements SipClient,
 
     public void onTransactionFailed(final SipMessage message)
         {
-        LOG.warn("Received non-OK response to register request: "+message);
+        m_log.warn("Received non-OK response to register request: "+message);
         synchronized (REGISTER_OK_LOCK)
             {
             this.m_receivedResponse = true;
@@ -398,9 +406,9 @@ public class SipClientImpl implements SipClient,
     public void operationComplete(final IoFuture future)
         {
         m_responsesWritten++;
-        if (LOG.isDebugEnabled())
+        if (m_log.isDebugEnabled())
             {
-            LOG.debug("Now written "+m_responsesWritten+" responses...");
+            m_log.debug("Now written "+m_responsesWritten+" responses...");
             }
         }
 
@@ -425,9 +433,9 @@ public class SipClientImpl implements SipClient,
 
     private void writeResponse(final SipMessage message)
         {
-        if (LOG.isDebugEnabled())
+        if (m_log.isDebugEnabled())
             {
-            LOG.debug("Sending SIP response...");
+            m_log.debug("Sending SIP response...");
             }
         
         final Runnable runner = new Runnable()
@@ -444,7 +452,7 @@ public class SipClientImpl implements SipClient,
                     }
                 catch (final Throwable t)
                     {
-                    LOG.error("Unexpected throwable", t);
+                    m_log.error("Unexpected throwable", t);
                     }
                 }
             };
@@ -456,24 +464,24 @@ public class SipClientImpl implements SipClient,
         final SocketAddress serviceAddress, final IoHandler handler, 
         final IoServiceConfig config)
         {
-        LOG.debug("Service activated.");
+        m_log.debug("Service activated.");
         }
 
     public void serviceDeactivated(final IoService service, 
         final SocketAddress serviceAddress, final IoHandler handler, 
         final IoServiceConfig config)
         {
-        LOG.debug("Service deactivated.");
+        m_log.debug("Service deactivated.");
         }
 
     public void sessionCreated(final IoSession session)
         {
-        LOG.debug("Session created.");
+        m_log.debug("Session created.");
         }
 
     public void sessionDestroyed(final IoSession session)
         {
-        LOG.debug("Lost connection to the registrar...notifying listener...");
+        m_log.debug("Lost connection to the registrar...notifying listener...");
         this.m_closed = true;
         this.m_crlfKeepAliveSender.stop();
         this.m_messageExecutor.shutdownNow();
