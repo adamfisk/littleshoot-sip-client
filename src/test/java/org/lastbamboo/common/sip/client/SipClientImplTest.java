@@ -73,7 +73,7 @@ public class SipClientImplTest extends TestCase
             {
             synchronized(this)
                 {
-                wait(10*1000);
+                wait(20*1000);
                 }
             }
         
