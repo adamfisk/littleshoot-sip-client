@@ -47,6 +47,7 @@ import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionListener
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionTracker;
 import org.lastbamboo.common.sip.stack.transport.SipTcpTransportLayer;
 import org.lastbamboo.common.sip.stack.util.UriUtils;
+import org.lastbamboo.common.util.DaemonThreadFactory;
 import org.lastbamboo.common.util.NetworkUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,7 +106,8 @@ public class SipClientImpl implements SipClient,
      * for both.  See: http://mina.apache.org/configuring-thread-model.html
      */
     private final ExecutorService m_acceptingExecutor = 
-        Executors.newCachedThreadPool();
+        Executors.newCachedThreadPool(
+            new DaemonThreadFactory("SIP-Client-Thread-Pool"));
     
     private final CrlfKeepAliveSender m_crlfKeepAliveSender;
 
