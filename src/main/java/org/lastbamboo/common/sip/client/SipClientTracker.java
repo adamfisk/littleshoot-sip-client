@@ -22,15 +22,11 @@ public interface SipClientTracker extends SipClientCloseListener
     /**
      * Adds a SIP client to the tracker.
      * 
-     * @param client
-     *      The client to track.
-     * @param listener
-     *      The registration listener that is notified when the client is
-     *      closed.  The closing of the client signifies that the registration
-     *      is lost.
+     * @param client The client to track.
+     * @param listener The registration listener that is notified when the 
+     * client is closed.  The closing of the client signifies that the 
+     * registration is lost.
      */
-    void addSipClient
-            (SipClient client,
-             ProxyRegistrationListener listener);
+    void addSipClient (SipClient client, ProxyRegistrationListener listener);
 
     }
