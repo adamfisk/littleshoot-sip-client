@@ -5,8 +5,9 @@
 
     <!--
         Class for keeping track of active SIP clients.
-     -->
+     
     <bean lazy-init="true" id="sipClientTracker"
         class="org.lastbamboo.common.sip.client.SipClientTrackerImpl"/>
+        -->
 
     </beans>

@@ -16,22 +16,29 @@ import junit.framework.TestCase;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.littleshoot.mina.common.ByteBuffer;
+import org.lastbamboo.common.offer.answer.MediaOfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.offer.answer.OfferAnswerListener;
-import org.lastbamboo.common.offer.answer.MediaOfferAnswer;
-import org.lastbamboo.common.sip.client.stubs.OfferAnswerStub;
 import org.lastbamboo.common.sip.client.stubs.MediaOfferAnswerStub;
+import org.lastbamboo.common.sip.client.stubs.OfferAnswerStub;
 import org.lastbamboo.common.sip.stack.SipUriFactory;
 import org.lastbamboo.common.sip.stack.SipUriFactoryImpl;
 import org.lastbamboo.common.sip.stack.message.SipMessage;
 import org.lastbamboo.common.sip.stack.message.SipMessageFactory;
+import org.lastbamboo.common.sip.stack.message.SipMessageFactoryImpl;
+import org.lastbamboo.common.sip.stack.message.header.SipHeaderFactory;
+import org.lastbamboo.common.sip.stack.message.header.SipHeaderFactoryImpl;
+import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionFactory;
+import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionFactoryImpl;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionListener;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionTracker;
+import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionTrackerImpl;
 import org.lastbamboo.common.sip.stack.transport.SipTcpTransportLayer;
+import org.lastbamboo.common.sip.stack.transport.SipTcpTransportLayerImpl;
 import org.lastbamboo.common.sip.stack.util.UriUtils;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.lastbamboo.common.sip.stack.util.UriUtilsImpl;
+import org.littleshoot.mina.common.ByteBuffer;
 
 /**
  * Tests a SIP client continually registering and sending messages.
@@ -86,30 +93,23 @@ public class SipClientImplTest extends TestCase
 
     private SipClient createSipClient() throws Exception
         {
-        final String[] contexts = 
-            {
-            "sipStackBeans.xml", "sipClientBeans.xml", "utilBeans.xml", 
-            };
-        
-        LOG.debug("Loading contexts...");
-        final ClassPathXmlApplicationContext context = 
-            new ClassPathXmlApplicationContext(contexts);
-        LOG.debug("Loaded contexts...");
-        
+        final UriUtils uriUtils = new UriUtilsImpl();
+        final SipHeaderFactory headerFactory = new SipHeaderFactoryImpl();
+        final SipMessageFactory messageFactory = new SipMessageFactoryImpl();
+        final SipTransactionTracker transactionTracker = 
+            new SipTransactionTrackerImpl();
+        final SipTransactionFactory transactionFactory = 
+            new SipTransactionFactoryImpl(transactionTracker, messageFactory, 500);
+        final SipTcpTransportLayer transportLayer = 
+            new SipTcpTransportLayerImpl(transactionFactory, headerFactory, 
+                messageFactory);
+        final SipClientTracker sipClientTracker = new SipClientTrackerImpl();
+     
         final long userId = 48392L;
         final URI clientUri = m_sipUriFactory.createSipUri (userId);
 
         final URI proxyUri = 
             new URI("sip:127.0.0.1:"+TEST_PORT+";transport=tcp");
-        
-        final SipMessageFactory messageFactory = 
-            (SipMessageFactory) context.getBean("sipMessageFactory");
-        final SipTransactionTracker transactionTracker = 
-            (SipTransactionTracker) context.getBean("sipTransactionTracker");
-        
-        final UriUtils uriUtils = (UriUtils) context.getBean("uriUtils");
-        final SipTcpTransportLayer transportLayer = 
-            (SipTcpTransportLayer) context.getBean("sipTransportLayer");
          
         final OfferAnswerFactory offerAnswerFactory = new OfferAnswerFactory()
             {
@@ -128,10 +128,7 @@ public class SipClientImplTest extends TestCase
                 return new MediaOfferAnswerStub();
                 }
             };
-            
-        final SipClientTracker sipClientTracker = 
-            (SipClientTracker) context.getBean("sipClientTracker");
-        
+       
         final CrlfDelayCalculator calculator = new DefaultCrlfDelayCalculator();
         final OfferAnswerListener offerAnswerListener = 
             new OfferAnswerListener()
