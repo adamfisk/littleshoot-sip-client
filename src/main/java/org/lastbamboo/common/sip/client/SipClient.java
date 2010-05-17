@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 
 import org.apache.commons.id.uuid.UUID;
-import org.apache.mina.common.ByteBuffer;
+import org.littleshoot.mina.common.ByteBuffer;
 import org.lastbamboo.common.sip.stack.message.Invite;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionListener;
 

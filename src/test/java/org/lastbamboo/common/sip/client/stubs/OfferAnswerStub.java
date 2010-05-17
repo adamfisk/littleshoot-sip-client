@@ -2,7 +2,7 @@ package org.lastbamboo.common.sip.client.stubs;
 
 import java.io.IOException;
 
-import org.apache.mina.common.ByteBuffer;
+import org.littleshoot.mina.common.ByteBuffer;
 import org.lastbamboo.common.offer.answer.OfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswerListener;
 
