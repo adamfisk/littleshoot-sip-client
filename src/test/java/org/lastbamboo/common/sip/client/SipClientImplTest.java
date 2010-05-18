@@ -14,8 +14,8 @@ import java.net.URI;
 import junit.framework.TestCase;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.lastbamboo.common.offer.answer.MediaOfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
@@ -47,7 +47,7 @@ public class SipClientImplTest extends TestCase
     implements SipTransactionListener
     {
 
-    private static final Log LOG = LogFactory.getLog(SipClientImplTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SipClientImplTest.class);
 
     private static final int NUM_INVITES = 100;
     
