@@ -1,7 +1,6 @@
 package org.lastbamboo.common.sip.client;
 
-import org.littleshoot.mina.common.ByteBuffer;
-import org.lastbamboo.common.offer.answer.MediaOfferAnswer;
+import org.lastbamboo.common.offer.answer.OfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswerConnectException;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.offer.answer.OfferAnswerListener;
@@ -16,6 +15,7 @@ import org.lastbamboo.common.sip.stack.message.UnknownSipRequest;
 import org.lastbamboo.common.sip.stack.transaction.client.SipClientTransaction;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionTracker;
 import org.lastbamboo.common.util.mina.MinaUtils;
+import org.littleshoot.mina.common.ByteBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,10 +64,11 @@ public class SipClientMessageVisitor implements SipMessageVisitor
         final ByteBuffer offer = invite.getBody();
         
         // Process the invite.
-        final MediaOfferAnswer offerAnswer;
+        final OfferAnswer offerAnswer;
         try
             {
-            offerAnswer = this.m_offerAnswerFactory.createAnswerer(offer);
+            offerAnswer = this.m_offerAnswerFactory.createAnswerer(
+                this.m_offerAnswerListener);
             }
         catch (final OfferAnswerConnectException e)
             {
@@ -83,7 +84,7 @@ public class SipClientMessageVisitor implements SipMessageVisitor
             }
         final byte[] answer = offerAnswer.generateAnswer();
         this.m_sipClient.writeInviteOk(invite, ByteBuffer.wrap(answer));
-        offerAnswer.processOffer(offer, this.m_offerAnswerListener);
+        offerAnswer.processOffer(offer);//, this.m_offerAnswerListener);
         
         m_log.debug("Done processing INVITE!!!");
         }

@@ -32,28 +32,38 @@ public class OfferAnswerStub implements OfferAnswer
         return null;
         }
 
-    public void processOffer(ByteBuffer offer) throws IOException
+    public void close()
         {
         // TODO Auto-generated method stub
         
         }
 
-    public void processAnswer(ByteBuffer answer) throws IOException
+    public void closeTcp()
         {
         // TODO Auto-generated method stub
         
         }
 
-    public void processAnswer(ByteBuffer answer, OfferAnswerListener offerAnswerListener)
+    public void closeUdp()
         {
         // TODO Auto-generated method stub
         
         }
 
-    public void processOffer(ByteBuffer offer, OfferAnswerListener offerAnswerListener)
+    public void processAnswer(ByteBuffer answer)
         {
         // TODO Auto-generated method stub
         
         }
 
+    public void processOffer(ByteBuffer offer)
+        {
+        // TODO Auto-generated method stub
+        
+        }
+
+    public void useRelay() 
+        {
+        // TODO Auto-generated method stub
+        }
     }

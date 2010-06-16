@@ -14,14 +14,10 @@ import java.net.URI;
 import junit.framework.TestCase;
 
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.lastbamboo.common.offer.answer.MediaOfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswer;
+import org.lastbamboo.common.offer.answer.OfferAnswerConnectException;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.offer.answer.OfferAnswerListener;
-import org.lastbamboo.common.sip.client.stubs.MediaOfferAnswerStub;
-import org.lastbamboo.common.sip.client.stubs.OfferAnswerStub;
 import org.lastbamboo.common.sip.stack.SipUriFactory;
 import org.lastbamboo.common.sip.stack.SipUriFactoryImpl;
 import org.lastbamboo.common.sip.stack.message.SipMessage;
@@ -38,7 +34,8 @@ import org.lastbamboo.common.sip.stack.transport.SipTcpTransportLayer;
 import org.lastbamboo.common.sip.stack.transport.SipTcpTransportLayerImpl;
 import org.lastbamboo.common.sip.stack.util.UriUtils;
 import org.lastbamboo.common.sip.stack.util.UriUtilsImpl;
-import org.littleshoot.mina.common.ByteBuffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tests a SIP client continually registering and sending messages.
@@ -113,33 +110,37 @@ public class SipClientImplTest extends TestCase
          
         final OfferAnswerFactory offerAnswerFactory = new OfferAnswerFactory()
             {
-            public OfferAnswer createOfferer()
-                {
-                return new OfferAnswerStub();
-                }
 
-            public MediaOfferAnswer createAnswerer(ByteBuffer offer)
-                {
-                return new MediaOfferAnswerStub();
-                }
+            public OfferAnswer createAnswerer(OfferAnswerListener listener)
+                throws OfferAnswerConnectException {
+                return null;
+            }
 
-            public MediaOfferAnswer createMediaOfferer()
-                {
-                return new MediaOfferAnswerStub();
-                }
+            public OfferAnswer createOfferer(OfferAnswerListener listener)
+                throws OfferAnswerConnectException {
+                return null;
+            }
             };
        
         final CrlfDelayCalculator calculator = new DefaultCrlfDelayCalculator();
         final OfferAnswerListener offerAnswerListener = 
             new OfferAnswerListener()
             {
-            public void onOfferAnswerComplete(final MediaOfferAnswer offerAnswer)
-                {
-                }
 
-            public void onOfferAnswerFailed(MediaOfferAnswer mediaOfferAnswer)
-                {
-                }
+            public void onOfferAnswerFailed(OfferAnswer offerAnswer) {
+                // TODO Auto-generated method stub
+                
+            }
+
+            public void onTcpSocket(Socket sock) {
+                // TODO Auto-generated method stub
+                
+            }
+
+            public void onUdpSocket(Socket sock) {
+                // TODO Auto-generated method stub
+                
+            }
             };
         final SipClient client = 
             new SipClientImpl(clientUri, proxyUri, 
