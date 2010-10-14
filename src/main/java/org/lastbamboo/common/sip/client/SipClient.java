@@ -4,26 +4,15 @@ import java.io.IOException;
 import java.net.URI;
 
 import org.apache.commons.id.uuid.UUID;
-import org.littleshoot.mina.common.ByteBuffer;
+import org.lastbamboo.common.offer.answer.Offerer;
 import org.lastbamboo.common.sip.stack.message.Invite;
-import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionListener;
+import org.littleshoot.mina.common.ByteBuffer;
 
 /**
  * Interface for an individual SIP client connected to an individual SIP proxy.
  */
-public interface SipClient
+public interface SipClient extends Offerer
     {
-
-    /**
-     * Sends an INVITE request to the host identified by the specified SIP URI.
-     * 
-     * @param sipUri The URI of the SIP host to send the INVITE request to.
-     * @param body The body to encapsulate in the INVITE, such as SDP data.
-     * @param listener The listener for transaction state changes.
-     * @throws IOException If there's a transport error sending the INVITE.
-     */
-    void invite(URI sipUri, byte[] body, SipTransactionListener listener) 
-        throws IOException;
     
     /**
      * Accessor for the unique instance ID for this client.

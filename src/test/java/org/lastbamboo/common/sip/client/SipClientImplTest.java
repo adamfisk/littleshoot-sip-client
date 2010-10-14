@@ -18,16 +18,16 @@ import org.lastbamboo.common.offer.answer.OfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswerConnectException;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.offer.answer.OfferAnswerListener;
+import org.lastbamboo.common.offer.answer.OfferAnswerMessage;
+import org.lastbamboo.common.offer.answer.OfferAnswerTransactionListener;
 import org.lastbamboo.common.sip.stack.SipUriFactory;
 import org.lastbamboo.common.sip.stack.SipUriFactoryImpl;
-import org.lastbamboo.common.sip.stack.message.SipMessage;
 import org.lastbamboo.common.sip.stack.message.SipMessageFactory;
 import org.lastbamboo.common.sip.stack.message.SipMessageFactoryImpl;
 import org.lastbamboo.common.sip.stack.message.header.SipHeaderFactory;
 import org.lastbamboo.common.sip.stack.message.header.SipHeaderFactoryImpl;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionFactory;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionFactoryImpl;
-import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionListener;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionTracker;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionTrackerImpl;
 import org.lastbamboo.common.sip.stack.transport.SipTcpTransportLayer;
@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * Tests a SIP client continually registering and sending messages.
  */
 public class SipClientImplTest extends TestCase 
-    implements SipTransactionListener
+    implements OfferAnswerTransactionListener
     {
 
     private static final Logger LOG = LoggerFactory.getLogger(SipClientImplTest.class);
@@ -70,7 +70,7 @@ public class SipClientImplTest extends TestCase
         final byte[] body = new byte[0];
         for (int i = 0; i < NUM_INVITES; i++)
             {
-            client.invite(invitee, body, this);
+            client.offer(invitee, body, this);
             }
         
         if (m_invitesReceivedOnServer < NUM_INVITES)
@@ -265,12 +265,12 @@ public class SipClientImplTest extends TestCase
             }
         }
 
-    public void onTransactionFailed(SipMessage arg0)
+    public void onTransactionFailed(OfferAnswerMessage arg0)
         {
         LOG.debug("Transaction failed...");
         }
 
-    public void onTransactionSucceeded(SipMessage arg0)
+    public void onTransactionSucceeded(OfferAnswerMessage arg0)
         {
         LOG.debug("Transaction succeeded...");
         }

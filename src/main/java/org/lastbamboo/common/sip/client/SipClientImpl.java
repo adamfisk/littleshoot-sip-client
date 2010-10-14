@@ -12,6 +12,25 @@ import java.util.concurrent.Executors;
 
 import org.apache.commons.id.uuid.UUID;
 import org.apache.commons.io.IOExceptionWithCause;
+import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
+import org.lastbamboo.common.offer.answer.OfferAnswerListener;
+import org.lastbamboo.common.offer.answer.OfferAnswerMessage;
+import org.lastbamboo.common.offer.answer.OfferAnswerTransactionListener;
+import org.lastbamboo.common.sip.stack.IdleSipSessionListener;
+import org.lastbamboo.common.sip.stack.codec.SipIoHandler;
+import org.lastbamboo.common.sip.stack.codec.SipProtocolCodecFactory;
+import org.lastbamboo.common.sip.stack.message.Invite;
+import org.lastbamboo.common.sip.stack.message.Register;
+import org.lastbamboo.common.sip.stack.message.SipMessage;
+import org.lastbamboo.common.sip.stack.message.SipMessageFactory;
+import org.lastbamboo.common.sip.stack.message.SipMessageVisitorFactory;
+import org.lastbamboo.common.sip.stack.message.header.SipHeaderFactory;
+import org.lastbamboo.common.sip.stack.message.header.SipHeaderFactoryImpl;
+import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionTracker;
+import org.lastbamboo.common.sip.stack.transport.SipTcpTransportLayer;
+import org.lastbamboo.common.sip.stack.util.UriUtils;
+import org.lastbamboo.common.util.DaemonThreadFactory;
+import org.lastbamboo.common.util.NetworkUtils;
 import org.littleshoot.mina.common.ByteBuffer;
 import org.littleshoot.mina.common.ConnectFuture;
 import org.littleshoot.mina.common.IoConnector;
@@ -31,24 +50,6 @@ import org.littleshoot.mina.filter.codec.ProtocolCodecFilter;
 import org.littleshoot.mina.filter.executor.ExecutorFilter;
 import org.littleshoot.mina.transport.socket.nio.SocketConnector;
 import org.littleshoot.mina.transport.socket.nio.SocketConnectorConfig;
-import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
-import org.lastbamboo.common.offer.answer.OfferAnswerListener;
-import org.lastbamboo.common.sip.stack.IdleSipSessionListener;
-import org.lastbamboo.common.sip.stack.codec.SipIoHandler;
-import org.lastbamboo.common.sip.stack.codec.SipProtocolCodecFactory;
-import org.lastbamboo.common.sip.stack.message.Invite;
-import org.lastbamboo.common.sip.stack.message.Register;
-import org.lastbamboo.common.sip.stack.message.SipMessage;
-import org.lastbamboo.common.sip.stack.message.SipMessageFactory;
-import org.lastbamboo.common.sip.stack.message.SipMessageVisitorFactory;
-import org.lastbamboo.common.sip.stack.message.header.SipHeaderFactory;
-import org.lastbamboo.common.sip.stack.message.header.SipHeaderFactoryImpl;
-import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionListener;
-import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionTracker;
-import org.lastbamboo.common.sip.stack.transport.SipTcpTransportLayer;
-import org.lastbamboo.common.sip.stack.util.UriUtils;
-import org.lastbamboo.common.util.DaemonThreadFactory;
-import org.lastbamboo.common.util.NetworkUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +59,7 @@ import org.slf4j.LoggerFactory;
  * writing.
  */
 public class SipClientImpl implements SipClient,
-    SipTransactionListener, IoFutureListener, IoServiceListener
+    OfferAnswerTransactionListener, IoFutureListener, IoServiceListener
     {
 
     private final Logger m_log = LoggerFactory.getLogger(getClass());
@@ -67,7 +68,7 @@ public class SipClientImpl implements SipClient,
     
     private final Object REGISTER_OK_LOCK = new Object();
     
-    private boolean m_receivedResponse;
+    private volatile boolean m_receivedResponse;
 
     private final URI m_sipClientUri;
 
@@ -89,8 +90,7 @@ public class SipClientImpl implements SipClient,
 
     private final SipClientCloseListener m_closeListener;
 
-    private boolean m_registrationSucceeded;
-    
+    private volatile boolean m_registrationSucceeded;
     
     /**
      * The executor is used to queue up messages in order.  This allows 
@@ -311,8 +311,8 @@ public class SipClientImpl implements SipClient,
         this.m_messageExecutor.execute(runner);
         }
     
-    public void invite(final URI sipUri, final byte[] body, 
-        final SipTransactionListener listener) throws IOException
+    public void offer(final URI sipUri, final byte[] body, 
+        final OfferAnswerTransactionListener listener) 
         {
         final Runnable runner = new Runnable()
             {
@@ -363,13 +363,13 @@ public class SipClientImpl implements SipClient,
             domain, "Anonymous", client, this.m_instanceId, 
             this.m_contactUri);
         
-        waitForRegisterResponse(request, session, REGISTER_OK_LOCK);
+        waitForRegisterResponse(request, session);
         }
     
     private void waitForRegisterResponse(final Register request, 
-        final IoSession session, final Object lock) throws IOException
+        final IoSession session) throws IOException
         {
-        synchronized (lock)
+        synchronized (REGISTER_OK_LOCK)
             {
             this.m_receivedResponse = false;
             this.m_transportLayer.register(request, session, this);
@@ -378,9 +378,10 @@ public class SipClientImpl implements SipClient,
                 {
                 try
                     {
-                    lock.wait(10 * 1000);
+                    REGISTER_OK_LOCK.wait(20 * 1000);
                     if (!this.m_receivedResponse)
                         {
+                        m_log.error("Did not get response after waiting");
                         throw new IOException("Did not get response!!");
                         }
                     }
@@ -399,9 +400,9 @@ public class SipClientImpl implements SipClient,
             }
         }
 
-    public void onTransactionSucceeded(final SipMessage message)
+    public void onTransactionSucceeded(final OfferAnswerMessage message)
         {
-        m_log.debug("Received OK response to register request: "+message);
+        m_log.debug("Received OK response to register request: {}", message);
         synchronized (REGISTER_OK_LOCK)
             {
             this.m_receivedResponse = true;
@@ -410,9 +411,9 @@ public class SipClientImpl implements SipClient,
             }
         }
 
-    public void onTransactionFailed(final SipMessage message)
+    public void onTransactionFailed(final OfferAnswerMessage message)
         {
-        m_log.warn("Received non-OK response to register request: "+message);
+        m_log.warn("Received non-OK response to register request: {}", message);
         synchronized (REGISTER_OK_LOCK)
             {
             this.m_receivedResponse = true;
