@@ -314,6 +314,7 @@ public class SipClientImpl implements SipClient,
     public void offer(final URI sipUri, final byte[] body, 
         final OfferAnswerTransactionListener listener) 
         {
+        m_log.info("Sending offer to SIP URI: {}", sipUri);
         final Runnable runner = new Runnable()
             {
             public void run()
