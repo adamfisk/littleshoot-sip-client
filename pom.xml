@@ -61,15 +61,5 @@
             <artifactId>lastbamboo-common-util-mina</artifactId>
             </dependency>
 
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            </dependency>
-            
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
-            </dependency>
- 
         </dependencies>
     </project>
