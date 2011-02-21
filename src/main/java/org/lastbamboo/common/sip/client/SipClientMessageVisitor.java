@@ -14,7 +14,7 @@ import org.lastbamboo.common.sip.stack.message.SipResponse;
 import org.lastbamboo.common.sip.stack.message.UnknownSipRequest;
 import org.lastbamboo.common.sip.stack.transaction.client.SipClientTransaction;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionTracker;
-import org.lastbamboo.common.util.mina.MinaUtils;
+import org.littleshoot.util.mina.MinaUtils;
 import org.littleshoot.mina.common.ByteBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
