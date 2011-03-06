@@ -13,7 +13,6 @@ import java.util.concurrent.Executors;
 import org.apache.commons.id.uuid.UUID;
 import org.apache.commons.io.IOExceptionWithCause;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
-import org.lastbamboo.common.offer.answer.OfferAnswerListener;
 import org.lastbamboo.common.offer.answer.OfferAnswerMessage;
 import org.lastbamboo.common.offer.answer.OfferAnswerTransactionListener;
 import org.lastbamboo.common.sip.stack.IdleSipSessionListener;
@@ -29,8 +28,6 @@ import org.lastbamboo.common.sip.stack.message.header.SipHeaderFactoryImpl;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionTracker;
 import org.lastbamboo.common.sip.stack.transport.SipTcpTransportLayer;
 import org.lastbamboo.common.sip.stack.util.UriUtils;
-import org.littleshoot.util.DaemonThreadFactory;
-import org.littleshoot.util.NetworkUtils;
 import org.littleshoot.mina.common.ByteBuffer;
 import org.littleshoot.mina.common.ConnectFuture;
 import org.littleshoot.mina.common.IoConnector;
@@ -50,6 +47,9 @@ import org.littleshoot.mina.filter.codec.ProtocolCodecFilter;
 import org.littleshoot.mina.filter.executor.ExecutorFilter;
 import org.littleshoot.mina.transport.socket.nio.SocketConnector;
 import org.littleshoot.mina.transport.socket.nio.SocketConnectorConfig;
+import org.littleshoot.util.DaemonThreadFactory;
+import org.littleshoot.util.NetworkUtils;
+import org.littleshoot.util.SessionSocketListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,9 +118,9 @@ public class SipClientImpl implements SipClient,
 
     private final OfferAnswerFactory m_offerAnswerFactory;
 
-    private final OfferAnswerListener m_offerAnswerListener;
-
     private final IdleSipSessionListener m_idleSipSessionListener;
+
+    private final SessionSocketListener socketListener;
 
     /**
      * Creates a new SIP client connection to an individual SIP proxy server.
@@ -136,8 +136,8 @@ public class SipClientImpl implements SipClient,
      * @param offerAnswerFactory
      *            Factory for creating classes capable of handling offers and
      *            answers.
-     * @param offerAnswerListener
-     *            The listener for offer/answer events.
+     * @param socketListener
+     *            The listener for incoming sockets on the answerer.
      * @param uriUtils
      *            Utilities for handling SIP URIs.
      * @param transportLayer
@@ -154,12 +154,12 @@ public class SipClientImpl implements SipClient,
             final SipMessageFactory messageFactory,
             final SipTransactionTracker transactionTracker,
             final OfferAnswerFactory offerAnswerFactory,
-            final OfferAnswerListener offerAnswerListener,
+            final SessionSocketListener socketListener,
             final UriUtils uriUtils, final SipTcpTransportLayer transportLayer,
             final SipClientCloseListener closeListener,
             final CrlfDelayCalculator calculator,
             final IdleSipSessionListener idleSipSessionListener) {
-        m_offerAnswerListener = offerAnswerListener;
+        this.socketListener = socketListener;
         // Configure the MINA buffers for optimal performance.
         ByteBuffer.setUseDirectBuffers(false);
         ByteBuffer.setAllocator(new SimpleByteBufferAllocator());
@@ -210,7 +210,7 @@ public class SipClientImpl implements SipClient,
         final SipMessageVisitorFactory visitorFactory = 
             new SipClientMessageVisitorFactory(
                 this, this.m_transactionTracker, this.m_offerAnswerFactory,
-                this.m_offerAnswerListener);
+                this.socketListener);
 
         final SipHeaderFactory headerFactory = new SipHeaderFactoryImpl();
 

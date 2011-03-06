@@ -34,6 +34,7 @@ import org.lastbamboo.common.sip.stack.transport.SipTcpTransportLayer;
 import org.lastbamboo.common.sip.stack.transport.SipTcpTransportLayerImpl;
 import org.lastbamboo.common.sip.stack.util.UriUtils;
 import org.lastbamboo.common.sip.stack.util.UriUtilsImpl;
+import org.littleshoot.util.SessionSocketListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,29 +124,13 @@ public class SipClientImplTest extends TestCase
             };
        
         final CrlfDelayCalculator calculator = new DefaultCrlfDelayCalculator();
-        final OfferAnswerListener offerAnswerListener = 
-            new OfferAnswerListener()
-            {
-
-            public void onOfferAnswerFailed(OfferAnswer offerAnswer) {
-                // TODO Auto-generated method stub
-                
-            }
-
-            public void onTcpSocket(Socket sock) {
-                // TODO Auto-generated method stub
-                
-            }
-
-            public void onUdpSocket(Socket sock) {
-                // TODO Auto-generated method stub
-                
-            }
-            };
+        final SessionSocketListener sl = new SessionSocketListener() {
+            public void onSocket(String id, Socket sock) throws IOException {}
+        };
         final SipClient client = 
             new SipClientImpl(clientUri, proxyUri, 
                 messageFactory, transactionTracker, offerAnswerFactory, 
-                offerAnswerListener, uriUtils, transportLayer, 
+                sl, uriUtils, transportLayer, 
                 sipClientTracker, calculator, null);
        
         client.connect();
