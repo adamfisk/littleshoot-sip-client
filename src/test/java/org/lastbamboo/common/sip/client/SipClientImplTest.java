@@ -14,6 +14,7 @@ import java.net.URI;
 import junit.framework.TestCase;
 
 import org.apache.commons.lang.StringUtils;
+import org.lastbamboo.common.offer.answer.IceMediaStreamDesc;
 import org.lastbamboo.common.offer.answer.OfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswerConnectException;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
@@ -109,19 +110,19 @@ public class SipClientImplTest extends TestCase
         final URI proxyUri = 
             new URI("sip:127.0.0.1:"+TEST_PORT+";transport=tcp");
          
-        final OfferAnswerFactory offerAnswerFactory = new OfferAnswerFactory()
-            {
+        final OfferAnswerFactory offerAnswerFactory = new OfferAnswerFactory() {
 
             public OfferAnswer createAnswerer(OfferAnswerListener listener)
-                throws OfferAnswerConnectException {
+                    throws OfferAnswerConnectException {
                 return null;
             }
 
-            public OfferAnswer createOfferer(OfferAnswerListener listener)
-                throws OfferAnswerConnectException {
+            public OfferAnswer createOfferer(OfferAnswerListener listener,
+                    final IceMediaStreamDesc streamDesc)
+                    throws OfferAnswerConnectException {
                 return null;
             }
-            };
+        };
        
         final CrlfDelayCalculator calculator = new DefaultCrlfDelayCalculator();
         final SessionSocketListener sl = new SessionSocketListener() {
