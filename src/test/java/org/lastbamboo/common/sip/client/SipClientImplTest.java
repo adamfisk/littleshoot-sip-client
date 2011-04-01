@@ -22,7 +22,7 @@ import org.lastbamboo.common.offer.answer.OfferAnswerListener;
 import org.lastbamboo.common.offer.answer.OfferAnswerMessage;
 import org.lastbamboo.common.offer.answer.OfferAnswerTransactionListener;
 import org.lastbamboo.common.sip.stack.SipUriFactory;
-import org.lastbamboo.common.sip.stack.SipUriFactoryImpl;
+import org.lastbamboo.common.sip.stack.SipUriFactory;
 import org.lastbamboo.common.sip.stack.message.SipMessageFactory;
 import org.lastbamboo.common.sip.stack.message.SipMessageFactoryImpl;
 import org.lastbamboo.common.sip.stack.message.header.SipHeaderFactory;
@@ -65,7 +65,7 @@ public class SipClientImplTest extends TestCase
     public void testSipClientInvites() throws Exception
         {
         startServerThread();
-        m_sipUriFactory = new SipUriFactoryImpl();
+        m_sipUriFactory = new SipUriFactory();
         final SipClient client = createSipClient();
         
         final URI invitee = m_sipUriFactory.createSipUri(42798L);
