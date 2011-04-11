@@ -1,5 +1,6 @@
 package org.lastbamboo.common.sip.client;
 
+import org.apache.commons.lang.StringUtils;
 import org.lastbamboo.common.offer.answer.AnswererOfferAnswerListener;
 import org.lastbamboo.common.offer.answer.OfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswerConnectException;
@@ -68,6 +69,9 @@ public class SipClientMessageVisitor implements SipMessageVisitor {
         final ByteBuffer offer = invite.getBody();
         final String offerString = MinaUtils.toAsciiString(offer);
 
+        final String start = invite.getStartLine();
+        String id = StringUtils.substringAfter(start, "INVITE ");
+        id = StringUtils.substringBefore(id, "SIP").trim() + id.hashCode();
         // Process the invite.
         final OfferAnswer offerAnswer;
         try {
@@ -75,7 +79,7 @@ public class SipClientMessageVisitor implements SipMessageVisitor {
             // this.m_offerAnswerListener);
             offerAnswer = 
                 this.m_offerAnswerFactory.createAnswerer(
-                    new AnswererOfferAnswerListener(invite.getStartLine(), 
+                    new AnswererOfferAnswerListener(id, 
                         this.socketListener, this.callListener, offerString));
         } catch (final OfferAnswerConnectException e) {
             // This indicates we could not establish the necessary connections
