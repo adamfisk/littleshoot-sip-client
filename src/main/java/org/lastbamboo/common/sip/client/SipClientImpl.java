@@ -122,6 +122,8 @@ public class SipClientImpl implements SipClient,
 
     private final SessionSocketListener socketListener;
 
+    private final SessionSocketListener callSocketListener;
+
     /**
      * Creates a new SIP client connection to an individual SIP proxy server.
      * 
@@ -155,11 +157,13 @@ public class SipClientImpl implements SipClient,
             final SipTransactionTracker transactionTracker,
             final OfferAnswerFactory offerAnswerFactory,
             final SessionSocketListener socketListener,
+            final SessionSocketListener callSocketListener,
             final UriUtils uriUtils, final SipTcpTransportLayer transportLayer,
             final SipClientCloseListener closeListener,
             final CrlfDelayCalculator calculator,
             final IdleSipSessionListener idleSipSessionListener) {
         this.socketListener = socketListener;
+        this.callSocketListener = callSocketListener;
         // Configure the MINA buffers for optimal performance.
         ByteBuffer.setUseDirectBuffers(false);
         ByteBuffer.setAllocator(new SimpleByteBufferAllocator());
@@ -210,7 +214,7 @@ public class SipClientImpl implements SipClient,
         final SipMessageVisitorFactory visitorFactory = 
             new SipClientMessageVisitorFactory(
                 this, this.m_transactionTracker, this.m_offerAnswerFactory,
-                this.socketListener);
+                this.socketListener, callSocketListener);
 
         final SipHeaderFactory headerFactory = new SipHeaderFactoryImpl();
 

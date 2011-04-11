@@ -18,6 +18,7 @@ public class SipClientMessageVisitorFactory implements SipMessageVisitorFactory{
     private final SipClient m_sipClient;
     private final OfferAnswerFactory m_offerAnswerFactory;
     private final SessionSocketListener socketListener;
+    private final SessionSocketListener callSocketListener;
 
     /**
      * Creates a new message visitor factory.
@@ -31,17 +32,19 @@ public class SipClientMessageVisitorFactory implements SipMessageVisitorFactory{
     public SipClientMessageVisitorFactory(final SipClient sipClient,
             final SipTransactionTracker transactionTracker,
             final OfferAnswerFactory offerAnswerFactory,
-            final SessionSocketListener socketListener) {
+            final SessionSocketListener socketListener,
+            final SessionSocketListener callSocketListener) {
         m_sipClient = sipClient;
         m_transactionTracker = transactionTracker;
         m_offerAnswerFactory = offerAnswerFactory;
         this.socketListener = socketListener;
+        this.callSocketListener = callSocketListener;
     }
 
     public SipMessageVisitor createVisitor(final IoSession session) {
         return new SipClientMessageVisitor(this.m_sipClient,
                 this.m_transactionTracker, this.m_offerAnswerFactory,
-                this.socketListener);
+                this.socketListener, this.callSocketListener);
     }
 
 }

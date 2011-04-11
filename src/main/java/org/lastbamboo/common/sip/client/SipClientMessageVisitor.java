@@ -30,6 +30,7 @@ public class SipClientMessageVisitor implements SipMessageVisitor {
     private final SipClient m_sipClient;
     private final OfferAnswerFactory m_offerAnswerFactory;
     private final SessionSocketListener socketListener;
+    private final SessionSocketListener callListener;
 
     /**
      * Visitor for message received on SIP clients.
@@ -47,11 +48,13 @@ public class SipClientMessageVisitor implements SipMessageVisitor {
     public SipClientMessageVisitor(final SipClient sipClient,
             final SipTransactionTracker tracker,
             final OfferAnswerFactory offerAnswerFactory,
-            final SessionSocketListener socketListener) {
+            final SessionSocketListener socketListener,
+            final SessionSocketListener callListener) {
         this.m_sipClient = sipClient;
         this.m_transactionTracker = tracker;
         this.m_offerAnswerFactory = offerAnswerFactory;
         this.socketListener = socketListener;
+        this.callListener = callListener;
     }
 
     public void visitRequestTimedOut(final RequestTimeoutResponse response) {
@@ -63,21 +66,22 @@ public class SipClientMessageVisitor implements SipMessageVisitor {
         m_log.debug("Received invite: {}", invite);
 
         final ByteBuffer offer = invite.getBody();
+        final String offerString = MinaUtils.toAsciiString(offer);
 
         // Process the invite.
         final OfferAnswer offerAnswer;
         try {
             // offerAnswer = this.m_offerAnswerFactory.createAnswerer(
             // this.m_offerAnswerListener);
-            offerAnswer = this.m_offerAnswerFactory
-                    .createAnswerer(new AnswererOfferAnswerListener(invite
-                            .getStartLine(), this.socketListener));
+            offerAnswer = 
+                this.m_offerAnswerFactory.createAnswerer(
+                    new AnswererOfferAnswerListener(invite.getStartLine(), 
+                        this.socketListener, this.callListener, offerString));
         } catch (final OfferAnswerConnectException e) {
             // This indicates we could not establish the necessary connections
             // for generating our candidates.
-            m_log.warn(
-                    "We could not create candidates for offer: "
-                            + MinaUtils.toAsciiString(offer), e);
+            m_log.warn("We could not create candidates for offer: " + 
+                offerString, e);
             // Generate a SIP error response.
             // See http://tools.ietf.org/html/rfc3261#section-13.3.1.3
             this.m_sipClient.writeInviteRejected(invite, 488,

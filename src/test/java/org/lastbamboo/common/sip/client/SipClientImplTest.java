@@ -131,7 +131,7 @@ public class SipClientImplTest extends TestCase
         final SipClient client = 
             new SipClientImpl(clientUri, proxyUri, 
                 messageFactory, transactionTracker, offerAnswerFactory, 
-                sl, uriUtils, transportLayer, 
+                sl, sl, uriUtils, transportLayer, 
                 sipClientTracker, calculator, null);
        
         client.connect();
