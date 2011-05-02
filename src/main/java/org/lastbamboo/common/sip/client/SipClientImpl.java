@@ -48,6 +48,7 @@ import org.littleshoot.mina.filter.executor.ExecutorFilter;
 import org.littleshoot.mina.transport.socket.nio.SocketConnector;
 import org.littleshoot.mina.transport.socket.nio.SocketConnectorConfig;
 import org.littleshoot.util.DaemonThreadFactory;
+import org.littleshoot.util.KeyStorage;
 import org.littleshoot.util.NetworkUtils;
 import org.littleshoot.util.SessionSocketListener;
 import org.slf4j.Logger;
@@ -120,49 +121,40 @@ public class SipClientImpl implements SipClient,
 
     private final IdleSipSessionListener m_idleSipSessionListener;
 
-    private final SessionSocketListener socketListener;
-
     private final SessionSocketListener callSocketListener;
+
+    private final InetSocketAddress serverAddress;
 
     /**
      * Creates a new SIP client connection to an individual SIP proxy server.
      * 
-     * @param sipClientUri
-     *            The URI of the client.
-     * @param proxyUri
-     *            The URI of the proxy.
-     * @param messageFactory
-     *            The factory for creating new SIP messages.
-     * @param transactionTracker
-     *            The class for keeping track of SIP client transactions.
-     * @param offerAnswerFactory
-     *            Factory for creating classes capable of handling offers and
-     *            answers.
-     * @param socketListener
-     *            The listener for incoming sockets on the answerer.
-     * @param uriUtils
-     *            Utilities for handling SIP URIs.
-     * @param transportLayer
-     *            The class for actually sending SIP messages.
-     * @param closeListener
-     *            The class that listens for closed connections to proxies.
-     * @param calculator
-     *            The class that calculates the delay between double CRLF
-     *            keep-alive messages, passed in for testing.
-     * @param idleSipSessionListener
-     *            Listener for idle SIP sessions.
+     * @param sipClientUri The URI of the client.
+     * @param proxyUri The URI of the proxy.
+     * @param messageFactory The factory for creating new SIP messages.
+     * @param transactionTracker The class for keeping track of SIP client 
+     * transactions.
+     * @param offerAnswerFactory Factory for creating classes capable of 
+     * handling offers and answers.
+     * @param serverAddress The listener for incoming sockets on the answerer.
+     * @param uriUtils Utilities for handling SIP URIs.
+     * @param transportLayer The class for actually sending SIP messages.
+     * @param closeListener The class that listens for closed connections to 
+     * proxies.
+     * @param calculator The class that calculates the delay between double CRLF
+     * keep-alive messages, passed in for testing.
+     * @param idleSipSessionListener Listener for idle SIP sessions.
      */
     public SipClientImpl(final URI sipClientUri, final URI proxyUri,
             final SipMessageFactory messageFactory,
             final SipTransactionTracker transactionTracker,
             final OfferAnswerFactory offerAnswerFactory,
-            final SessionSocketListener socketListener,
+            final InetSocketAddress serverAddress,
             final SessionSocketListener callSocketListener,
             final UriUtils uriUtils, final SipTcpTransportLayer transportLayer,
             final SipClientCloseListener closeListener,
             final CrlfDelayCalculator calculator,
             final IdleSipSessionListener idleSipSessionListener) {
-        this.socketListener = socketListener;
+        this.serverAddress = serverAddress;
         this.callSocketListener = callSocketListener;
         // Configure the MINA buffers for optimal performance.
         ByteBuffer.setUseDirectBuffers(false);
@@ -214,7 +206,7 @@ public class SipClientImpl implements SipClient,
         final SipMessageVisitorFactory visitorFactory = 
             new SipClientMessageVisitorFactory(
                 this, this.m_transactionTracker, this.m_offerAnswerFactory,
-                this.socketListener, callSocketListener);
+                this.serverAddress, callSocketListener);
 
         final SipHeaderFactory headerFactory = new SipHeaderFactoryImpl();
 
@@ -300,8 +292,10 @@ public class SipClientImpl implements SipClient,
         this.m_messageExecutor.execute(runner);
     }
 
+
     public void offer(final URI sipUri, final byte[] body,
-            final OfferAnswerTransactionListener listener) {
+        final OfferAnswerTransactionListener listener,
+        final KeyStorage keyStore) throws IOException {
         m_log.info("Sending offer to SIP URI: {}", sipUri);
         final Runnable runner = new Runnable() {
             public void run() {

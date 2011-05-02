@@ -1,5 +1,7 @@
 package org.lastbamboo.common.sip.client;
 
+import java.net.InetSocketAddress;
+
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.sip.stack.message.SipMessageVisitor;
 import org.lastbamboo.common.sip.stack.message.SipMessageVisitorFactory;
@@ -17,8 +19,8 @@ public class SipClientMessageVisitorFactory implements SipMessageVisitorFactory{
     private final SipTransactionTracker m_transactionTracker;
     private final SipClient m_sipClient;
     private final OfferAnswerFactory m_offerAnswerFactory;
-    private final SessionSocketListener socketListener;
     private final SessionSocketListener callSocketListener;
+    private final InetSocketAddress serverAddress;
 
     /**
      * Creates a new message visitor factory.
@@ -27,24 +29,24 @@ public class SipClientMessageVisitorFactory implements SipMessageVisitorFactory{
      * @param transactionTracker The tracker for SIP transactions.
      * @param offerAnswerFactory The factory for creating offer/answer 
      * instances.
-     * @param socketListener Listener for incoming sockets on the answerer.
+     * @param serverAddress Listener for incoming sockets on the answerer.
      */
     public SipClientMessageVisitorFactory(final SipClient sipClient,
             final SipTransactionTracker transactionTracker,
             final OfferAnswerFactory offerAnswerFactory,
-            final SessionSocketListener socketListener,
+            final InetSocketAddress serverAddress,
             final SessionSocketListener callSocketListener) {
         m_sipClient = sipClient;
         m_transactionTracker = transactionTracker;
         m_offerAnswerFactory = offerAnswerFactory;
-        this.socketListener = socketListener;
+        this.serverAddress = serverAddress;
         this.callSocketListener = callSocketListener;
     }
 
     public SipMessageVisitor createVisitor(final IoSession session) {
         return new SipClientMessageVisitor(this.m_sipClient,
                 this.m_transactionTracker, this.m_offerAnswerFactory,
-                this.socketListener, this.callSocketListener);
+                this.serverAddress, this.callSocketListener);
     }
 
 }

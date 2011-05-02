@@ -1,5 +1,7 @@
 package org.lastbamboo.common.sip.client;
 
+import java.net.InetSocketAddress;
+
 import org.apache.commons.lang.StringUtils;
 import org.lastbamboo.common.offer.answer.AnswererOfferAnswerListener;
 import org.lastbamboo.common.offer.answer.OfferAnswer;
@@ -30,31 +32,27 @@ public class SipClientMessageVisitor implements SipMessageVisitor {
     private final SipTransactionTracker m_transactionTracker;
     private final SipClient m_sipClient;
     private final OfferAnswerFactory m_offerAnswerFactory;
-    private final SessionSocketListener socketListener;
     private final SessionSocketListener callListener;
+    private final InetSocketAddress serverAddress;
 
     /**
      * Visitor for message received on SIP clients.
      * 
-     * @param sipClient
-     *            The SIP client for writing any necessary messages.
-     * @param tracker
-     *            The tracker for looking up the corresponding transactions for
-     *            received messages.
-     * @param offerAnswerFactory
-     *            Class that processes incoming INVITEs.
-     * @param socketListener
-     *            The listener for incoming sockets on the answerer.
+     * @param sipClient The SIP client for writing any necessary messages.
+     * @param tracker The tracker for looking up the corresponding transactions 
+     * for received messages.
+     * @param offerAnswerFactory Class that processes incoming INVITEs.
+     * @param serverAddress The listener for incoming sockets on the answerer.
      */
     public SipClientMessageVisitor(final SipClient sipClient,
             final SipTransactionTracker tracker,
             final OfferAnswerFactory offerAnswerFactory,
-            final SessionSocketListener socketListener,
+            final InetSocketAddress serverAddress,
             final SessionSocketListener callListener) {
         this.m_sipClient = sipClient;
         this.m_transactionTracker = tracker;
         this.m_offerAnswerFactory = offerAnswerFactory;
-        this.socketListener = socketListener;
+        this.serverAddress = serverAddress;
         this.callListener = callListener;
     }
 
@@ -80,7 +78,8 @@ public class SipClientMessageVisitor implements SipMessageVisitor {
             offerAnswer = 
                 this.m_offerAnswerFactory.createAnswerer(
                     new AnswererOfferAnswerListener(id, 
-                        this.socketListener, this.callListener, offerString));
+                        this.serverAddress, this.callListener, offerString, 
+                        null, null));
         } catch (final OfferAnswerConnectException e) {
             // This indicates we could not establish the necessary connections
             // for generating our candidates.

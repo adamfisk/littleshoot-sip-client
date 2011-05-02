@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
@@ -21,7 +22,6 @@ import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.offer.answer.OfferAnswerListener;
 import org.lastbamboo.common.offer.answer.OfferAnswerMessage;
 import org.lastbamboo.common.offer.answer.OfferAnswerTransactionListener;
-import org.lastbamboo.common.sip.stack.SipUriFactory;
 import org.lastbamboo.common.sip.stack.SipUriFactory;
 import org.lastbamboo.common.sip.stack.message.SipMessageFactory;
 import org.lastbamboo.common.sip.stack.message.SipMessageFactoryImpl;
@@ -46,13 +46,12 @@ public class SipClientImplTest extends TestCase
     implements OfferAnswerTransactionListener
     {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SipClientImplTest.class);
+    private static final Logger LOG = 
+        LoggerFactory.getLogger(SipClientImplTest.class);
 
     private static final int NUM_INVITES = 100;
     
     private final int TEST_PORT = 8472;
-
-    private SipUriFactory m_sipUriFactory;
 
     private int m_invitesReceivedOnServer;
     
@@ -65,14 +64,13 @@ public class SipClientImplTest extends TestCase
     public void testSipClientInvites() throws Exception
         {
         startServerThread();
-        m_sipUriFactory = new SipUriFactory();
         final SipClient client = createSipClient();
         
-        final URI invitee = m_sipUriFactory.createSipUri(42798L);
+        final URI invitee = SipUriFactory.createSipUri(42798L);
         final byte[] body = new byte[0];
         for (int i = 0; i < NUM_INVITES; i++)
             {
-            client.offer(invitee, body, this);
+            client.offer(invitee, body, this, null);
             }
         
         if (m_invitesReceivedOnServer < NUM_INVITES)
@@ -105,7 +103,7 @@ public class SipClientImplTest extends TestCase
         final SipClientTracker sipClientTracker = new SipClientTrackerImpl();
      
         final long userId = 48392L;
-        final URI clientUri = m_sipUriFactory.createSipUri (userId);
+        final URI clientUri = SipUriFactory.createSipUri (userId);
 
         final URI proxyUri = 
             new URI("sip:127.0.0.1:"+TEST_PORT+";transport=tcp");
@@ -131,7 +129,7 @@ public class SipClientImplTest extends TestCase
         final SipClient client = 
             new SipClientImpl(clientUri, proxyUri, 
                 messageFactory, transactionTracker, offerAnswerFactory, 
-                sl, sl, uriUtils, transportLayer, 
+                new InetSocketAddress(TEST_PORT), sl, uriUtils, transportLayer, 
                 sipClientTracker, calculator, null);
        
         client.connect();
