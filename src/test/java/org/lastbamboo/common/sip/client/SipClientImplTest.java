@@ -110,7 +110,8 @@ public class SipClientImplTest extends TestCase
          
         final OfferAnswerFactory offerAnswerFactory = new OfferAnswerFactory() {
 
-            public OfferAnswer createAnswerer(OfferAnswerListener listener)
+            public OfferAnswer createAnswerer(OfferAnswerListener listener,
+                    final boolean useRelay)
                     throws OfferAnswerConnectException {
                 return null;
             }
