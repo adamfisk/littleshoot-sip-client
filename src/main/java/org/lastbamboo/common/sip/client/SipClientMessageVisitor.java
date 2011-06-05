@@ -3,6 +3,7 @@ package org.lastbamboo.common.sip.client;
 import java.net.InetSocketAddress;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.RandomUtils;
 import org.lastbamboo.common.offer.answer.AnswererOfferAnswerListener;
 import org.lastbamboo.common.offer.answer.OfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswerConnectException;
@@ -67,9 +68,9 @@ public class SipClientMessageVisitor implements SipMessageVisitor {
         final ByteBuffer offer = invite.getBody();
         final String offerString = MinaUtils.toAsciiString(offer);
 
-        final String start = invite.getStartLine();
+        final String start = invite.getHeader("From").toString();
         String id = StringUtils.substringAfter(start, "INVITE ");
-        id = StringUtils.substringBefore(id, "SIP").trim() + id.hashCode();
+        id = StringUtils.substringBefore(id, "SIP").trim() + "-"+RandomUtils.nextInt();
         // Process the invite.
         final OfferAnswer offerAnswer;
         try {
