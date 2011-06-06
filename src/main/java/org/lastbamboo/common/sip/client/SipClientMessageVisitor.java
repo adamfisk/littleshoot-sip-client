@@ -2,7 +2,6 @@ package org.lastbamboo.common.sip.client;
 
 import java.net.InetSocketAddress;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
 import org.lastbamboo.common.offer.answer.AnswererOfferAnswerListener;
 import org.lastbamboo.common.offer.answer.OfferAnswer;
@@ -16,6 +15,7 @@ import org.lastbamboo.common.sip.stack.message.SipMessage;
 import org.lastbamboo.common.sip.stack.message.SipMessageVisitor;
 import org.lastbamboo.common.sip.stack.message.SipResponse;
 import org.lastbamboo.common.sip.stack.message.UnknownSipRequest;
+import org.lastbamboo.common.sip.stack.message.header.SipHeaderNames;
 import org.lastbamboo.common.sip.stack.transaction.client.SipClientTransaction;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionTracker;
 import org.littleshoot.mina.common.ByteBuffer;
@@ -68,9 +68,8 @@ public class SipClientMessageVisitor implements SipMessageVisitor {
         final ByteBuffer offer = invite.getBody();
         final String offerString = MinaUtils.toAsciiString(offer);
 
-        final String start = invite.getHeader("From").toString();
-        String id = StringUtils.substringAfter(start, "INVITE ");
-        id = StringUtils.substringBefore(id, "SIP").trim() + "-"+RandomUtils.nextInt();
+        final String from = invite.getHeader(SipHeaderNames.FROM).toString();
+        final String id = from + "-"+RandomUtils.nextInt();
         // Process the invite.
         final OfferAnswer offerAnswer;
         try {
