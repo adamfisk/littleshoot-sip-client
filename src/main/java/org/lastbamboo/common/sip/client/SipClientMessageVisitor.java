@@ -2,6 +2,7 @@ package org.lastbamboo.common.sip.client;
 
 import java.net.InetSocketAddress;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
 import org.lastbamboo.common.offer.answer.AnswererOfferAnswerListener;
 import org.lastbamboo.common.offer.answer.OfferAnswer;
@@ -69,7 +70,16 @@ public class SipClientMessageVisitor implements SipMessageVisitor {
         final String offerString = MinaUtils.toAsciiString(offer);
 
         final String from = invite.getHeader(SipHeaderNames.FROM).toString();
-        final String id = from + "-"+RandomUtils.nextInt();
+        
+        final String rawFrom = StringUtils.substringBetween(from, "<", ">");
+        final String toUse;
+        if (StringUtils.isBlank(rawFrom)) {
+            toUse = from;
+        } else {
+            toUse = rawFrom;
+        }
+        final String id = toUse + "-"+RandomUtils.nextInt();
+        
         // Process the invite.
         final OfferAnswer offerAnswer;
         try {
