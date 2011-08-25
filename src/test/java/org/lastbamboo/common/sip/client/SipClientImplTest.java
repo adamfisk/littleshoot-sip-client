@@ -121,6 +121,18 @@ public class SipClientImplTest extends TestCase
                     throws OfferAnswerConnectException {
                 return null;
             }
+
+            @Override
+            public boolean isAnswererPortMapped() {
+                // TODO Auto-generated method stub
+                return false;
+            }
+
+            @Override
+            public int getMappedPort() {
+                // TODO Auto-generated method stub
+                return 0;
+            }
         };
        
         final CrlfDelayCalculator calculator = new DefaultCrlfDelayCalculator();
