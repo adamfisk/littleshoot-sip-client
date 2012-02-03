@@ -28,6 +28,7 @@ import org.lastbamboo.common.sip.stack.message.header.SipHeaderFactoryImpl;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionTracker;
 import org.lastbamboo.common.sip.stack.transport.SipTcpTransportLayer;
 import org.lastbamboo.common.sip.stack.util.UriUtils;
+import org.littleshoot.dnssec4j.VerifiedAddressFactory;
 import org.littleshoot.mina.common.ByteBuffer;
 import org.littleshoot.mina.common.ConnectFuture;
 import org.littleshoot.mina.common.IoConnector;
@@ -189,8 +190,11 @@ public class SipClientImpl implements SipClient,
     public void connect() throws IOException {
         final String host = this.m_uriUtils.getHostInSipUri(this.m_proxyUri);
         final int port = this.m_uriUtils.getPortInSipUri(this.m_proxyUri);
-        final InetSocketAddress remoteAddress = new InetSocketAddress(host,
-                port);
+        //final InetSocketAddress remoteAddress = new InetSocketAddress(host,
+        //        port);
+        final InetSocketAddress remoteAddress =
+            VerifiedAddressFactory.newInetSocketAddress(host, port, 
+                SipClientConfig.isUseDnsSec());
 
         m_log.debug("Connecting to registrar at: " + remoteAddress);
         this.m_ioSession = connect(remoteAddress);
