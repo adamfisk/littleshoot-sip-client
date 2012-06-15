@@ -88,8 +88,8 @@ public class SipClientMessageVisitor implements SipMessageVisitor {
             offerAnswer = 
                 this.m_offerAnswerFactory.createAnswerer(
                     new AnswererOfferAnswerListener(id, 
-                        this.serverAddress, this.callListener, offerString, 
-                        null, null), true);
+                        this.serverAddress, this.callListener, offerString), 
+                        true);
         } catch (final OfferAnswerConnectException e) {
             // This indicates we could not establish the necessary connections
             // for generating our candidates.
