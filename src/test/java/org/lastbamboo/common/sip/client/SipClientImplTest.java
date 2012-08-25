@@ -138,6 +138,12 @@ public class SipClientImplTest extends TestCase
         final CrlfDelayCalculator calculator = new DefaultCrlfDelayCalculator();
         final SessionSocketListener sl = new SessionSocketListener() {
             public void onSocket(String id, Socket sock) throws IOException {}
+
+            @Override
+            public void reconnected() {
+                // TODO Auto-generated method stub
+                
+            }
         };
         final SipClient client = 
             new SipClientImpl(clientUri, proxyUri, 
